@@ -4,6 +4,7 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
+app.use(express.static(path.join(__dirname, 'public')));
 
 const app = express();
 const PORT = 3000;
