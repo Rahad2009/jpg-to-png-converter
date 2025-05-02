@@ -1,27 +1,31 @@
-
 # Universal Image Converter
 
-This app lets users upload any image and convert it to PNG, JPEG, GIF, or WebP.
+A simple, client-side image converter app that allows users to upload multiple images, select the output format (JPEG, PNG, WebP), and compress the images. The resulting images are then packed into a ZIP file for download.
 
-## How to Run Locally
+## Features
+- Select multiple images to convert.
+- Choose the output format (JPEG, PNG, or WebP).
+- Adjust image quality (10–100).
+- Compress and download the images as a ZIP file.
 
-1. Install dependencies:
+## Tech Stack
+- **HTML**: Front-end structure
+- **Tailwind CSS**: Styling framework for a clean, responsive design
+- **JavaScript**: For image compression and ZIP generation
+- **Browser Image Compression**: Image compression on the client side
+- **JSZip**: For creating ZIP files
+- **FileSaver.js**: For downloading the compressed images
 
-```bash
-npm install
-```
+## Deployment on Render
 
-2. Start the server:
+### 1. Prepare Your Render App
 
-```bash
-node server.js
-```
+- Sign up or log in to [Render.com](https://render.com/).
+- Create a **Static Site** for this app.
+- Connect your GitHub repository or upload the ZIP folder manually.
 
-3. Open `http://localhost:3000` in your browser.
+### 2. Upload the Project
 
-## Deploy to Render
+- Download the zip file `universal-image-compressor.zip` from here: [Download Link](sandbox:/mnt/data/universal-image-compressor.zip).
+- Unzip the contents and ensure the structure is as follows:
 
-- Create a new Web Service on [Render.com](https://render.com/)
-- Connect to your GitHub repo
-- Use `node server.js` as the start command
-- Auto-deploy from main branch
