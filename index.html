@@ -1,10 +1,32 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Image Converter</title>
+
+  <!-- 🔹 SEO Title & Meta -->
+  <title>Free Online Image Converter – JPG, PNG, GIF, WebP</title>
+  <meta name="description" content="Convert your images online to JPG, PNG, GIF, or WebP for free. Fast, simple, and no registration needed.">
+
+  <!-- 🔹 Canonical URL -->
+  <link rel="canonical" href="https://yourdomain.com/" />
+
+  <!-- 🔹 Schema Markup -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Online Image Converter",
+    "operatingSystem": "All",
+    "applicationCategory": "MultimediaApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -63,7 +85,7 @@
   </nav>
   <div class="container">
     <div class="preview">
-      <img src="https://via.placeholder.com/150" alt="Sample Image" />
+      <img src="https://via.placeholder.com/150" alt="Sample image conversion from JPG to PNG" />
     </div>
     <form action="/convert" method="POST" enctype="multipart/form-data">
       <input type="file" name="image" accept="image/*" required />
@@ -76,11 +98,26 @@
       </select>
       <button type="submit">Convert</button>
     </form>
+
     <section id="guide">
       <h2>User Guide</h2>
       <p>1. Click 'Choose File' to upload an image.</p>
       <p>2. Select the desired output format.</p>
       <p>3. Click 'Convert' and your file will be downloaded automatically.</p>
+    </section>
+
+    <!-- 🔹 FAQ Section for SEO -->
+    <section>
+      <h2>Frequently Asked Questions</h2>
+
+      <h3>What image formats are supported?</h3>
+      <p>You can convert JPG, PNG, GIF, BMP, and WebP formats.</p>
+
+      <h3>Is this image converter free?</h3>
+      <p>Yes, it's completely free and requires no registration or login.</p>
+
+      <h3>Do I need to install anything?</h3>
+      <p>No. It works entirely in your browser — upload and convert instantly.</p>
     </section>
   </div>
   <footer>
