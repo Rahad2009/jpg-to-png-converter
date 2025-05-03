@@ -11,22 +11,14 @@
 
     <meta name="keywords" content="image converter, compress image, reduce image size, online image converter, free image compressor, batch image converter, convert image to jpeg, convert image to png, convert image to webp, convert image to avif, convert image to jxl, image optimization">
 
-    <link rel="canonical" href="https://yourwebsite.com/">
-
-    <link rel="icon" href="/logo.png" type="image/png">
+    <link rel="canonical" href="https://yourwebsite.com/"> <link rel="icon" href="/logo.png" type="image/png">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://yourwebsite.com/">
-    <meta property="og:title" content="Universal Image Converter | Compress & Convert Images Online">
+    <meta property="og:url" content="https://yourwebsite.com/"> <meta property="og:title" content="Universal Image Converter | Compress & Convert Images Online">
     <meta property="og:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="og:image" content="https://yourwebsite.com/social-share-image.jpg">
-
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://yourwebsite.com/">
-    <meta property="twitter:title" content="Universal Image Converter | Compress & Convert Images Online">
+    <meta property="og:image" content="https://yourwebsite.com/social-share-image.jpg"> <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourwebsite.com/"> <meta property="twitter:title" content="Universal Image Converter | Compress & Convert Images Online">
     <meta property="twitter:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="twitter:image" content="https://yourwebsite.com/social-share-image.jpg">
-
-    <meta name="theme-color" content="#3b82f6">
+    <meta property="twitter:image" content="https://yourwebsite.com/social-share-image.jpg"> <meta name="theme-color" content="#3b82f6">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -129,6 +121,29 @@
 
           /* Removed progress bar styles */
     </style>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Universal Image Converter",
+      "operatingSystem": "Web",
+      "applicationCategory": "https://schema.org/MultimediaApplication",
+      "url": "https://yourwebsite.com/",  "description": "Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality."
+      // You can add more properties here if applicable, for example:
+      // "aggregateRating": {
+      //   "@type": "AggregateRating",
+      //   "ratingValue": "4.5", // Replace with actual rating
+      //   "reviewCount": "100" // Replace with actual review count
+      // },
+      // "offers": {
+      //   "@type": "Offer",
+      //   "price": "0",
+      //   "priceCurrency": "USD"
+      // }
+    }
+    </script>
+
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans">
     <div class="max-w-3xl mx-auto py-10 px-4">
@@ -346,8 +361,7 @@
             if (fileEntryElement) {
                 fileList.removeChild(fileEntryElement);
             }
-            // updateButtonStates() is called by the remove button event listener now
-            // updateButtonStates(); // Update button states based on file count
+            updateButtonStates(); // Update button states based on file count
         }
 
         // Function to update the state and text of the buttons
@@ -470,23 +484,10 @@
                 return;
             }
 
-            // Removed progress bar showing and resetting logic
-            // progressBarContainer.classList.remove('hidden');
-            // progressBar.style.width = '0%';
-            // progressBarText.textContent = '0';
-            // progressStatusText.textContent = `Processing...`;
-            // progressBar.setAttribute('aria-valuenow', '0');
-            // progressBar.classList.remove('bg-red-500', 'bg-yellow-500');
-            // progressBar.classList.add('bg-blue-500');
-
-
             // Update status to Processing for all files
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
             downloadAllBtn.classList.add('hidden'); // Hide download all button at the start of processing
              console.log("Download All button hidden at start of processing."); // Log when hidden
-
-            // Removed reset processed count
-            // processedCount = 0;
 
 
             const formData = new FormData();
@@ -513,14 +514,6 @@
                          files.forEach(file => updateFileStatus(file.name, "Error", true, 'Server error.'));
                     }
                     alert(errorDetails);
-                    // Removed progress bar update logic on failure
-                    // const completionPercentage = files.length > 0 ? (processedCount / files.length) * 100 : 100;
-                    // progressBar.style.width = `${completionPercentage}%`;
-                    // progressBarText.textContent = `${completionPercentage.toFixed(0)}`;
-                    // progressBar.classList.remove('bg-blue-500', 'bg-yellow-500');
-                    // progressBar.classList.add('bg-red-500');
-                    // progressStatusText.textContent = `Processing Failed`;
-                    // progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
 
 
                 } else {
@@ -539,13 +532,6 @@
                         } else {
                             successfullyProcessedCount++;
                         }
-                        // Removed increment processed count and progress bar update
-                        // processedCount++;
-                        // const completionPercentage = files.length > 0 ? (processedCount / files.length) * 100 : 100;
-                        // progressBar.style.width = `${completionPercentage}%`;
-                        // progressBarText.textContent = `${completionPercentage.toFixed(0)}`;
-                        // progressStatusText.textContent = `Processed ${processedCount}/${files.length} files...`;
-                        // progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
                     });
 
                     // After processing all results:
@@ -561,9 +547,6 @@
                               // Trigger download by navigating to the new backend download-all-zip route
                               window.open('/download-all-zip', '_blank');
                          };
-                         // Removed progress bar hiding and final status text update
-                         // progressBarContainer.classList.add('hidden');
-                         // progressStatusText.textContent = 'Processing Complete!';
 
 
                     } else {
@@ -574,15 +557,6 @@
                          downloadAllBtn.onclick = () => {
                             alert("Download All functionality is not yet fully implemented in this version.");
                          };
-
-                         // Removed progress bar update logic on partial success/failure
-                         // if (files.length > 0) {
-                         //      progressBar.classList.remove('bg-blue-500');
-                         //      progressBar.classList.add('bg-yellow-500');
-                         //      progressStatusText.textContent = `Processed ${successfullyProcessedCount}/${files.length} files (with errors)`;
-                         // } else {
-                         //     progressBarContainer.classList.add('hidden');
-                         // }
                     }
                 }
 
@@ -592,14 +566,6 @@
                 console.error("Fetch error:", error);
                  // Set status to Error for all files if a general fetch error occurs
                  files.forEach(file => updateFileStatus(file.name, "Error", true, error.message));
-                 // Removed progress bar update logic on failure
-                // const completionPercentage = files.length > 0 ? (processedCount / files.length) * 100 : 100;
-                // progressBar.style.width = `${completionPercentage}%`;
-                // progressBarText.textContent = `${completionPercentage.toFixed(0)}`;
-                // progressBar.classList.remove('bg-blue-500', 'bg-yellow-500');
-                // progressBar.classList.add('bg-red-500');
-                // progressStatusText.textContent = `Processing Failed`;
-                // progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
             } finally {
                  // The clearAllBtn visibility is handled correctly within updateButtonStates
                  // when files are added or removed.
