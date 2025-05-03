@@ -30,11 +30,11 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Compression route: Handles POST requests to /compress
-// This route processes images and returns JSON results.
+// This route will now process images in parallel and return JSON results.
 app.post("/compress", upload.array("images"), async (req, res) => {
   // Clear previous processed images data
   // NOTE: This simple clearing means only the last batch of processed images is available for download.
-  // For multiple user sessions, you'd need a more sophisticated storage strategy.
+  // For multiple user sessions, you'd need a more sophisticated storage strategy (e.g., using session IDs or temporary directories).
   for (const key in processedImages) {
       delete processedImages[key];
   }
@@ -49,19 +49,16 @@ app.post("/compress", upload.array("images"), async (req, res) => {
     return res.status(400).json({ error: "No images uploaded." }); // Send JSON error
   }
 
-  console.log(`Received ${req.files.length} files for conversion to ${format} with quality ${quality}`); // Log received request details
+  console.log(`Received ${req.files.length} files for conversion to ${format} with quality ${quality}. Starting parallel processing...`); // Log received request details
 
-  const results = []; // Array to store processing results for each file
-
-  // Process each uploaded file
-  for (let file of req.files) {
+  const processingPromises = req.files.map(async (file) => {
     const originalname = file.originalname;
     const originalSize = file.size; // Original size in bytes
     const name = path.parse(originalname).name;
     const filename = `${name}.${format}`; // Output filename
     let status = "Error"; // Default status
     let compressedSize = 0; // Default compressed size
-    let processedBuffer = null; // To store the sharp output buffer
+    let errorMessage = null; // To store specific error message
 
     try {
       console.log(`Processing file: ${originalname}`); // Log which file is being processed
@@ -76,19 +73,20 @@ app.post("/compress", upload.array("images"), async (req, res) => {
       } else {
         console.warn(`Unsupported format requested for ${originalname}: ${format}. Skipping.`);
         status = "Unsupported Format";
-        results.push({ name: originalname, originalSize, compressedSize, status });
-        continue; // Skip to the next file
+        errorMessage = `Unsupported format: ${format}`;
       }
 
-      // Convert the sharp instance back to a buffer
-      processedBuffer = await converted.toBuffer();
-      compressedSize = processedBuffer.length; // Compressed size in bytes
-      status = "Complete";
+      // Only attempt to convert and store if format was supported
+      if (status !== "Unsupported Format") {
+          const buffer = await converted.toBuffer();
+          compressedSize = buffer.length; // Compressed size in bytes
+          status = "Complete";
 
-      // Store the processed buffer temporarily
-      processedImages[filename] = processedBuffer;
+          // Store the processed buffer temporarily
+          processedImages[filename] = buffer;
 
-      console.log(`Successfully processed: ${originalname} -> ${filename}. Original size: ${originalSize} bytes, Compressed size: ${compressedSize} bytes.`);
+          console.log(`Successfully processed: ${originalname} -> ${filename}. Original size: ${originalSize} bytes, Compressed size: ${compressedSize} bytes.`);
+      }
 
     } catch (err) {
       // Catch errors during sharp processing for a specific file
@@ -97,16 +95,30 @@ app.post("/compress", upload.array("images"), async (req, res) => {
           console.error(err.stack);
       }
       status = "Error";
+      errorMessage = err.message;
     }
 
-    // Add result for this file to the results array
-    results.push({ name: originalname, originalSize, compressedSize, status });
-  }
+    // Return result for this file
+    return {
+        name: originalname,
+        originalSize: originalSize,
+        compressedSize: compressedSize,
+        status: status,
+        errorMessage: errorMessage // Include error message in the result
+    };
+  });
 
-  console.log(`Finished processing files. Sending results for ${results.length} files.`);
+  // Wait for all processing promises to settle (either resolve or reject)
+  const results = await Promise.all(processingPromises);
+
+  console.log(`Finished parallel processing. Sending results for ${results.length} files.`);
 
   // Send the processing results as a JSON response
   res.json(results);
+
+  // NOTE: The processedImages object now holds the buffers of the successfully
+  // converted images. The /download/:filename route uses this storage.
+  // The "Download All" zip functionality still needs to be implemented separately.
 });
 
 // New route to download individual processed images
