@@ -291,7 +291,9 @@
             }
 
             // Hide download all button by default, show only after successful processing
+            // This is where the button is hidden initially and after clearing files.
             downloadAllBtn.classList.add('hidden');
+             console.log("Download All button hidden."); // Log when hidden
         }
 
         // Function to update the status of a specific file entry in the UI
@@ -387,7 +389,9 @@
             // Update status to Processing for all files
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
             // processBtn is removed, no need to disable it.
-            downloadAllBtn.classList.add('hidden'); // Hide download all button
+            downloadAllBtn.classList.add('hidden'); // Hide download all button at the start of processing
+             console.log("Download All button hidden at start of processing."); // Log when hidden
+
 
             const formData = new FormData();
             files.forEach(file => formData.append("images", file));
@@ -418,9 +422,10 @@
                         }
                     });
 
-                    // If all files processed successfully, show the Download All button
+                    // If all files processed successfully AND there are files, show the Download All button
                     if (allComplete && results.length > 0) {
                          downloadAllBtn.classList.remove('hidden');
+                         console.log("Download All button shown: All files complete."); // Log when shown
                          // Update Download All button text with count
                          downloadAllBtn.textContent = `Download All (${successfullyProcessedCount} image${successfullyProcessedCount === 1 ? '' : 's'})`;
 
@@ -431,8 +436,14 @@
                               window.open('/download-all-zip', '_blank');
                          };
 
-                    } else if (results.length === 0) {
-                         alert("No files were processed successfully.");
+                    } else {
+                         // If not all complete or no files processed, ensure button is hidden
+                         downloadAllBtn.classList.add('hidden');
+                         console.log("Download All button hidden: Not all files complete or no results."); // Log when hidden
+                         // Reset click handler to placeholder if button is hidden
+                         downloadAllBtn.onclick = () => {
+                            alert("Download All functionality is not yet fully implemented in this version.");
+                         };
                     }
                 }
 
@@ -442,7 +453,8 @@
                  files.forEach(file => updateFileStatus(file.name, "Error", true)); // Set status to Error
             } finally {
                  // processBtn is removed, no need to re-enable it.
-                 updateButtonStates(); // Ensure button states are correct (hides download if needed)
+                 // updateButtonStates() is called here to ensure Clear All button state is correct
+                 updateButtonStates();
             }
         }
 
