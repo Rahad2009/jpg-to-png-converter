@@ -234,12 +234,8 @@
         const processingStatusContainer = document.getElementById("processingStatusContainer");
         const overallProcessingStatus = document.getElementById("overallProcessingStatus");
 
-        // Get reference to the format select element
-        const formatSelect = document.getElementById("format");
-
 
         let selectedFiles = []; // Array to hold the files to be processed
-        // Removed the duplicate declaration of draggedItem
         let draggedItem = null; // To store the element being dragged
 
 
@@ -512,9 +508,9 @@
                 return;
             }
 
-            // Show and update overall processing status text with spinner
+            // Show and update overall processing status text
             processingStatusContainer.classList.remove('hidden');
-            overallProcessingStatus.innerHTML = `<span class="spinner"></span> Processing...`; // Add spinner here
+            overallProcessingStatus.textContent = 'Processing...';
 
 
             // Update status to Processing for all files (this adds individual spinners)
@@ -623,14 +619,12 @@
 
         // --- Drag and Drop Reordering Logic ---
 
-        // Removed the duplicate declaration of draggedItem here
-
+        let draggedItem = null; // To store the element being dragged
 
         function handleDragStart(e) {
             draggedItem = e.target; // Store the element being dragged
             e.dataTransfer.effectAllowed = 'move'; // Specify the drag effect
             e.dataTransfer.setData('text/plain', e.target.dataset.fileName); // Pass the filename
-            console.log('[DragStart] Dragging:', draggedItem.dataset.fileName); // Debug log
             setTimeout(() => {
                 draggedItem.classList.add('dragging'); // Add a class for styling (e.g., opacity)
             }, 0); // Use a timeout to allow the drag image to be created before changing style
@@ -642,7 +636,6 @@
 
             const targetItem = e.target.closest('.file-entry'); // Get the closest file entry element
             if (targetItem && targetItem !== draggedItem) {
-                console.log('[DragOver] Dragging over:', targetItem.dataset.fileName); // Debug log
                 // Determine if dragging above or below the target item
                 const boundingBox = targetItem.getBoundingClientRect();
                 const offset = boundingBox.y + (boundingBox.height / 2);
@@ -650,35 +643,24 @@
                 if (e.clientY > offset) {
                     // Dragging below the target
                     fileList.insertBefore(draggedItem, targetItem.nextSibling);
-                     console.log('[DragOver] Inserting after:', targetItem.dataset.fileName); // Debug log
                 } else {
                     // Dragging above the target
                     fileList.insertBefore(draggedItem, targetItem);
-                    console.log('[DragOver] Inserting before:', targetItem.dataset.fileName); // Debug log
                 }
-            } else if (!targetItem) {
-                 console.log('[DragOver] Not over a file entry.'); // Debug log
-            } else if (targetItem === draggedItem) {
-                 console.log('[DragOver] Dragging over itself.'); // Debug log
             }
         }
 
         function handleDragLeave(e) {
             // Remove any visual indicators if needed (not strictly necessary with current approach)
-             console.log('[DragLeave]'); // Debug log
         }
 
         function handleDrop(e) {
             e.preventDefault(); // Prevent default drop behavior
-            console.log('[Drop] Drop occurred.'); // Debug log
             // The actual DOM manipulation is done in dragover, so just clean up here
         }
 
         function handleDragEnd() {
-            console.log('[DragEnd] Drag ended.'); // Debug log
-            if (draggedItem) { // Check if draggedItem is not null
-                draggedItem.classList.remove('dragging'); // Remove the dragging class
-            }
+            draggedItem.classList.remove('dragging'); // Remove the dragging class
             draggedItem = null; // Clear the dragged item reference
 
             // --- Update the selectedFiles array order to match the DOM ---
@@ -689,18 +671,10 @@
                 const file = selectedFiles.find(f => f.name === fileName);
                 if (file) {
                     newSelectedFilesOrder.push(file);
-                } else {
-                    console.warn(`[DragEnd] File object not found for DOM entry: ${fileName}`); // Debug log if file is missing
                 }
             });
             selectedFiles = newSelectedFilesOrder;
-            console.log("[DragEnd] Selected files order updated:", selectedFiles.map(f => f.name)); // Log the new order
-
-            // After reordering, re-process the files in the new order
-             if (selectedFiles.length > 0) {
-                 console.log("[DragEnd] Re-processing files in new order."); // Debug log
-                 processAndDisplayResults();
-             }
+            console.log("Selected files order updated:", selectedFiles.map(f => f.name)); // Log the new order
         }
 
 
