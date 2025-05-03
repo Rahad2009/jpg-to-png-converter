@@ -125,6 +125,28 @@
            .status.text-red-600 {
               font-weight: 700; /* Bold for error */
           }
+
+          /* Style for the progress bar container */
+          .progress-container {
+              width: 100%;
+              background-color: #e5e7eb; /* gray-200 */
+              border-radius: 0.25rem; /* rounded-md */
+              overflow: hidden; /* Hide overflow */
+          }
+
+          /* Style for the progress bar fill */
+          .progress-bar {
+              height: 1rem; /* Adjust height as needed */
+              background-color: #3b82f6; /* blue-500 */
+              width: 0%; /* Initial width */
+              transition: width 0.3s ease-in-out; /* Smooth transition */
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 0.75rem; /* text-xs */
+              font-weight: bold;
+          }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans">
@@ -147,6 +169,14 @@
         <div id="dropzone" class="border-2 border-dashed border-blue-300 p-8 text-center rounded-lg cursor-pointer bg-white hover:bg-blue-50 transition-colors duration-200 ease-in-out mb-6 shadow-md"> <div class="text-blue-500 mb-2"><i class="fas fa-cloud-upload-alt text-4xl"></i></div> <p class="text-blue-700 font-semibold">Drop images here or click to upload</p> <p class="text-sm text-gray-500 mt-1">Supports JPEG, PNG, WebP, AVIF, and JXL</p>
             <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
         </div>
+
+        <div id="progressBarContainer" class="mb-6 hidden">
+            <p class="text-sm text-gray-700 mb-1"><span id="progressText">Processing...</span></p>
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+
 
         <button id="downloadAllBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-3 rounded-md w-full mb-6 transition-colors duration-200 ease-in-out shadow-md hover:shadow-lg hidden"> <i class="fas fa-download mr-3"></i> Download All Compressed Images (Zip)
         </button>
@@ -187,9 +217,12 @@
         const fileList = document.getElementById("fileList"); // Container for file entries
         const qualityInput = document.getElementById("quality");
         const qualityValue = document.getElementById("qualityValue");
-        // Removed processBtn reference
         const downloadAllBtn = document.getElementById("downloadAllBtn"); // Moved to top
         const clearAllBtn = document.getElementById("clearAllBtn"); // Clear All button
+        const progressBarContainer = document.getElementById("progressBarContainer"); // Progress bar container
+        const progressBar = document.getElementById("progressBar"); // Progress bar fill
+        const progressText = document.getElementById("progressText"); // Text above progress bar
+
 
         let selectedFiles = []; // Array to hold the files to be processed
 
@@ -233,6 +266,10 @@
             selectedFiles = []; // Clear the selected files array
             fileList.innerHTML = ""; // Clear the file list UI
             updateButtonStates(); // Update button states - This will now hide Download All
+             // Also hide the progress bar when clearing
+             progressBarContainer.classList.add('hidden');
+             progressBar.style.width = '0%';
+             progressText.textContent = 'Processing...';
         });
 
 
@@ -270,7 +307,7 @@
                     <div class="flex-grow">
                         <p class="file-name font-semibold text-gray-800">${file.name}</p>
                         <p class="status text-sm text-gray-600">Waiting...</p>
-                        <p class="size-info text-xs text-gray-500">Original: ${fileSizeKB} KB</p>
+                        <p class="size-info text-xs text-gray-500">Original: ${fileSizeKB} KB <span class="estimated-size hidden">(Estimated: N/A)</span></p>
                     </div>
                 </div>
                 <div class="flex-shrink-0 flex items-center">
@@ -432,7 +469,8 @@
                     sizeInfoElement.textContent = `${originalSizeKB} KB → ${compressedSizeKB} KB (${reduction}% smaller)`;
                      // Adjusted format to match screenshot more closely
                 } else {
-                     sizeInfoElement.textContent = `Original: ${originalSizeKB} KB`;
+                     sizeInfoElement.textContent = `Original: ${originalSizeKB} KB <span class="estimated-size hidden">(Estimated: N/A)</span>`;
+                     // Keep the placeholder if not complete
                 }
             }
          }
@@ -450,9 +488,15 @@
                 return;
             }
 
+            // Show and reset progress bar
+            progressBarContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressText.textContent = `Processing 0/${files.length} files...`;
+            progressBar.setAttribute('aria-valuenow', '0');
+
+
             // Update status to Processing for all files
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
-            // processBtn is removed, no need to disable it.
             downloadAllBtn.classList.add('hidden'); // Hide download all button at the start of processing
              console.log("Download All button hidden at start of processing."); // Log when hidden
 
@@ -481,6 +525,13 @@
                          files.forEach(file => updateFileStatus(file.name, "Error", true, 'Server error.'));
                     }
                     alert(errorDetails);
+                    // Update progress bar to indicate failure
+                    progressBar.style.width = '100%';
+                    progressBar.classList.remove('bg-blue-500');
+                    progressBar.classList.add('bg-red-500');
+                    progressText.textContent = `Processing Failed`;
+                    progressBar.setAttribute('aria-valuenow', '100');
+
 
                 } else {
                     // Response is OK, expect JSON results
@@ -500,6 +551,13 @@
                         }
                     });
 
+                    // Update progress bar based on completed files
+                    const completionPercentage = files.length > 0 ? (successfullyProcessedCount / files.length) * 100 : 100;
+                    progressBar.style.width = `${completionPercentage}%`;
+                    progressText.textContent = `Processed ${successfullyProcessedCount}/${files.length} files`;
+                     progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
+
+
                     // If all files processed successfully AND there are files, show the Download All button
                     if (allComplete && results.length > 0) {
                          downloadAllBtn.classList.remove('hidden');
@@ -513,6 +571,9 @@
                               // Trigger download by navigating to the new backend download-all-zip route
                               window.open('/download-all-zip', '_blank');
                          };
+                         // Hide progress bar on success
+                         progressBarContainer.classList.add('hidden');
+
 
                     } else {
                          // If not all complete or no files processed, ensure button is hidden
@@ -522,6 +583,16 @@
                          downloadAllBtn.onclick = () => {
                             alert("Download All functionality is not yet fully implemented in this version.");
                          };
+
+                         // Keep progress bar visible if some failed, maybe change color
+                         if (files.length > 0) {
+                              progressBar.classList.remove('bg-blue-500');
+                              progressBar.classList.add('bg-yellow-500'); // Indicate partial success/failure
+                              progressText.textContent = `Processed ${successfullyProcessedCount}/${files.length} files (with errors)`;
+                         } else {
+                             // Should not happen if files.length === 0 check at start works
+                             progressBarContainer.classList.add('hidden');
+                         }
                     }
                 }
 
@@ -531,9 +602,15 @@
                 console.error("Fetch error:", error);
                  // Set status to Error for all files if a general fetch error occurs
                  files.forEach(file => updateFileStatus(file.name, "Error", true, error.message));
+                 // Update progress bar to indicate failure
+                 progressBar.style.width = '100%';
+                 progressBar.classList.remove('bg-blue-500', 'bg-yellow-500');
+                 progressBar.classList.add('bg-red-500');
+                 progressText.textContent = `Processing Failed`;
+                 progressBar.setAttribute('aria-valuenow', '100');
             } finally {
-                 // updateButtonStates() is called by the remove button event listener now
-                 // updateButtonStates(); // Ensure button states are correct (hides download if needed)
+                 // The clearAllBtn visibility is handled correctly within updateButtonStates
+                 // when files are added or removed.
             }
         }
 
