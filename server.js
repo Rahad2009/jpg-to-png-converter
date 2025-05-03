@@ -34,8 +34,11 @@ app.post("/compress", upload.array("images"), async (req, res) => {
 
   // Check if files were uploaded
   if (!req.files || req.files.length === 0) {
+    console.warn("No images uploaded."); // Log this on the server too
     return res.status(400).send("No images uploaded.");
   }
+
+  console.log(`Received ${req.files.length} files for conversion to ${format} with quality ${quality}`); // Log received request details
 
   // Set response headers for a zip file download
   res.setHeader("Content-Type", "application/zip");
@@ -53,31 +56,34 @@ app.post("/compress", upload.array("images"), async (req, res) => {
   // Add error handling for the archive stream
   archive.on('error', function(err){
       console.error('Archiving error:', err);
-      // You might want to send an error response here, but it's tricky
-      // after piping has started. Consider more robust error handling.
-      // If headers haven't been sent, you could do res.status(500).send('Archive error');
+      // This error might occur after headers are sent, making it hard to send a different status.
+      // More advanced error handling might be needed for robust production apps.
   });
+
+  let processedCount = 0; // Track successfully processed files
 
   // Process each uploaded file
   for (let file of req.files) {
-    // Extract filename without extension
-    const name = path.parse(file.originalname).name;
-    // Create the output filename with the new format extension
-    const filename = `${name}.${format}`;
+    const originalname = file.originalname;
+    const name = path.parse(originalname).name;
+    const filename = `${name}.${format}`; // Output filename
 
     try {
+      console.log(`Processing file: ${originalname}`); // Log which file is being processed
+
       // Create a sharp instance from the file buffer
       let converted = sharp(file.buffer);
 
       // Check if the requested format is supported by Sharp and apply conversion
       // Note: Sharp's support for JXL might be experimental or require specific builds.
-      if (["jpeg", "png", "webp", "avif", "jxl"].includes(format)) {
+      const supportedFormats = ["jpeg", "png", "webp", "avif", "jxl"];
+      if (supportedFormats.includes(format)) {
         // Apply format conversion and quality setting
         // Quality is mainly effective for lossy formats (jpeg, webp, avif, jxl)
         converted = converted.toFormat(format, { quality });
       } else {
         // If format is not supported, log a warning and skip this file
-        console.warn(`Unsupported format requested for ${file.originalname}: ${format}. Skipping.`);
+        console.warn(`Unsupported format requested for ${originalname}: ${format}. Skipping.`);
         continue; // Skip to the next file
       }
 
@@ -85,13 +91,22 @@ app.post("/compress", upload.array("images"), async (req, res) => {
       const buffer = await converted.toBuffer();
       // Append the processed image buffer to the zip archive
       archive.append(buffer, { name: filename });
+      console.log(`Successfully processed and appended: ${originalname} as ${filename}`);
+      processedCount++; // Increment count for successful files
 
     } catch (err) {
       // Catch errors during sharp processing for a specific file
-      console.error(`Error processing ${file.originalname}:`, err.message);
+      console.error(`Error processing ${originalname}:`, err.message);
+      // Log the specific error details from Sharp
+      if (err.stack) {
+          console.error(err.stack);
+      }
       // This file will be skipped in the zip. The archive will continue with other files.
     }
   }
+
+  // Add a check or log after the loop
+  console.log(`Finished processing files. Successfully processed ${processedCount} out of ${req.files.length}.`);
 
   // Finalize the archive - signals the end of the archive and streams the footer
   // This should be called after all files have been appended.
