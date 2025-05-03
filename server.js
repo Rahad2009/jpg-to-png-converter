@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import sharp from "sharp";
-import archiver from "archiver";
+// Removed archiver as this route will return JSON, not a zip directly
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,7 +26,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Compression route: Handles POST requests to /compress
-// 'upload.array("images")' middleware processes the uploaded files before the handler
+// This route will now process images and return JSON results, NOT a zip file directly.
 app.post("/compress", upload.array("images"), async (req, res) => {
   // Get format and quality from query parameters
   const format = req.query.format; // Expected: 'jpeg', 'png', 'webp', 'avif', 'jxl'
@@ -35,38 +35,22 @@ app.post("/compress", upload.array("images"), async (req, res) => {
   // Check if files were uploaded
   if (!req.files || req.files.length === 0) {
     console.warn("No images uploaded."); // Log this on the server too
-    return res.status(400).send("No images uploaded.");
+    return res.status(400).json({ error: "No images uploaded." }); // Send JSON error
   }
 
   console.log(`Received ${req.files.length} files for conversion to ${format} with quality ${quality}`); // Log received request details
 
-  // Set response headers for a zip file download
-  res.setHeader("Content-Type", "application/zip");
-  // 'attachment' prompts download, 'filename' suggests the file name
-  res.setHeader("Content-Disposition", "attachment; filename=compressed_images.zip");
-
-  // Create a zip archiver instance
-  const archive = archiver("zip", {
-    zlib: { level: 6 } // Reduced compression level for potentially faster archiving
-  });
-
-  // Pipe the archive output directly to the response stream
-  archive.pipe(res);
-
-  // Add error handling for the archive stream
-  archive.on('error', function(err){
-      console.error('Archiving error:', err);
-      // This error might occur after headers are sent, making it hard to send a different status.
-      // More advanced error handling might be needed for robust production apps.
-  });
-
-  let processedCount = 0; // Track successfully processed files
+  const results = []; // Array to store processing results for each file
+  const processedFilesData = []; // Array to store processed file buffers and names for potential zipping later
 
   // Process each uploaded file
   for (let file of req.files) {
     const originalname = file.originalname;
+    const originalSize = file.size; // Original size in bytes
     const name = path.parse(originalname).name;
     const filename = `${name}.${format}`; // Output filename
+    let status = "Error"; // Default status
+    let compressedSize = 0; // Default compressed size
 
     try {
       console.log(`Processing file: ${originalname}`); // Log which file is being processed
@@ -75,42 +59,46 @@ app.post("/compress", upload.array("images"), async (req, res) => {
       let converted = sharp(file.buffer);
 
       // Check if the requested format is supported by Sharp and apply conversion
-      // Note: Sharp's support for JXL might be experimental or require specific builds.
       const supportedFormats = ["jpeg", "png", "webp", "avif", "jxl"];
       if (supportedFormats.includes(format)) {
-        // Apply format conversion and quality setting
-        // Quality is mainly effective for lossy formats (jpeg, webp, avif, jxl)
         converted = converted.toFormat(format, { quality });
       } else {
-        // If format is not supported, log a warning and skip this file
         console.warn(`Unsupported format requested for ${originalname}: ${format}. Skipping.`);
+        status = "Unsupported Format";
+        results.push({ name: originalname, originalSize, compressedSize, status });
         continue; // Skip to the next file
       }
 
       // Convert the sharp instance back to a buffer
       const buffer = await converted.toBuffer();
-      // Append the processed image buffer to the zip archive
-      archive.append(buffer, { name: filename });
-      console.log(`Successfully processed and appended: ${originalname} as ${filename}`);
-      processedCount++; // Increment count for successful files
+      compressedSize = buffer.length; // Compressed size in bytes
+      status = "Complete";
+      processedFilesData.push({ name: filename, buffer: buffer }); // Store processed data
+
+      console.log(`Successfully processed: ${originalname} -> ${filename}. Original size: ${originalSize} bytes, Compressed size: ${compressedSize} bytes.`);
 
     } catch (err) {
       // Catch errors during sharp processing for a specific file
       console.error(`Error processing ${originalname}:`, err.message);
-      // Log the specific error details from Sharp
       if (err.stack) {
           console.error(err.stack);
       }
-      // This file will be skipped in the zip. The archive will continue with other files.
+      status = "Error";
     }
+
+    // Add result for this file to the results array
+    results.push({ name: originalname, originalSize, compressedSize, status });
   }
 
-  // Add a check or log after the loop
-  console.log(`Finished processing files. Successfully processed ${processedCount} out of ${req.files.length}.`);
+  console.log(`Finished processing files. Sending results for ${results.length} files.`);
 
-  // Finalize the archive - signals the end of the archive and streams the footer
-  // This should be called after all files have been appended.
-  archive.finalize();
+  // Send the processing results as a JSON response
+  res.json(results);
+
+  // NOTE: The processedFilesData array now holds the buffers of the successfully
+  // converted images. You would need a separate route or mechanism to allow the
+  // user to download these as a zip file after they see the results.
+  // This requires further backend and frontend development.
 });
 
 // Start the Express server
