@@ -30,7 +30,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Compression route: Handles POST requests to /compress
-// This route processes images in parallel and returns JSON results.
+// This route will now process images in parallel and return JSON results.
 app.post("/compress", upload.array("images"), async (req, res) => {
   // Clear previous processed images data
   // NOTE: This simple clearing means only the last batch of processed images is available for download.
