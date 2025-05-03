@@ -1,5 +1,5 @@
 import express from "express";
-import fs from "fs";
+import fs from "fs"; // Imported but not used in this snippet - can be removed if not used elsewhere
 import path from "path";
 import multer from "multer";
 import sharp from "sharp";
@@ -14,14 +14,16 @@ const PORT = process.env.PORT || 3000;
 
 // Temporary storage for processed image buffers
 // In a production environment, consider more robust storage (e.g., disk, cloud storage)
-const processedImages = {}; // Object to store { filename: buffer } pairs
+// NOTE: This in-memory storage is simple but has limitations for concurrent users
+// and memory usage. It's cleared on each new /compress request.
+const processedImages = {}; // Object to store { outputFilename: buffer } pairs
 
-// Middleware to serve static files (like your index.html and logo.png)
+// Middleware to serve static files (like your index.html, logo.png, sitemap.xml, robots.txt)
 app.use(express.static(__dirname));
 
 // Serve main HTML file when accessing the root URL
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // Multer setup: Use memoryStorage to keep files in memory as buffers
@@ -30,161 +32,169 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Compression route: Handles POST requests to /compress
-// This route will now process images in parallel and return JSON results.
+// This route processes images in parallel and returns JSON results including output filenames.
 app.post("/compress", upload.array("images"), async (req, res) => {
-  // Clear previous processed images data
-  // NOTE: This simple clearing means only the last batch of processed images is available for download.
-  // For multiple user sessions, you'd need a more sophisticated storage strategy (e.g., using session IDs or temporary directories).
-  for (const key in processedImages) {
-      delete processedImages[key];
-  }
+  // Clear previous processed images data for this simple implementation
+  // This makes the temporary storage only hold the results of the last batch.
+  for (const key in processedImages) {
+      delete processedImages[key];
+  }
 
-  // Get format and quality from query parameters
-  const format = req.query.format; // Expected: 'jpeg', 'png', 'webp', 'avif', 'jxl'
-  const quality = parseInt(req.query.quality, 10) || 75; // Default quality to 75
+  // Get format and quality from query parameters
+  const format = req.query.format; // Expected: 'jpeg', 'png', 'webp', 'avif', 'jxl'
+  const quality = parseInt(req.query.quality, 10) || 75; // Default quality to 75
 
-  // Check if files were uploaded
-  if (!req.files || req.files.length === 0) {
-    console.warn("No images uploaded."); // Log this on the server too
-    return res.status(400).json({ error: "No images uploaded." }); // Send JSON error
-  }
+  // Check if files were uploaded
+  if (!req.files || req.files.length === 0) {
+    console.warn("No images uploaded."); // Log this on the server too
+    // Send a JSON error response with a 400 status code
+    return res.status(400).json({ error: "No images uploaded." });
+  }
 
-  console.log(`Received ${req.files.length} files for conversion to ${format} with quality ${quality}. Starting parallel processing...`); // Log received request details
+  console.log(`Received ${req.files.length} files for conversion to ${format} with quality ${quality}. Starting parallel processing...`); // Log received request details
 
-  const processingPromises = req.files.map(async (file) => {
-    const originalname = file.originalname;
-    const originalSize = file.size; // Original size in bytes
-    const name = path.parse(originalname).name;
-    const filename = `${name}.${format}`; // Output filename
-    let status = "Error"; // Default status
-    let compressedSize = 0; // Default compressed size
-    let errorMessage = null; // To store specific error message
+  // Process each file asynchronously using Promise.all
+  const processingPromises = req.files.map(async (file) => {
+    const originalname = file.originalname;
+    const originalSize = file.size; // Original size in bytes
+    const name = path.parse(originalname).name;
+    // Determine the output filename based on the original name and requested format
+    const outputFilename = `${name}.${format}`;
+    let status = "Error"; // Default status in case of any issue
+    let compressedSize = 0; // Default compressed size
+    let errorMessage = null; // To store specific error message for the frontend
 
-    try {
-      console.log(`Processing file: ${originalname}`); // Log which file is being processed
+    try {
+      console.log(`Processing file: ${originalname}`); // Log which file is being processed
 
-      // Create a sharp instance from the file buffer
-      let converted = sharp(file.buffer);
+      // Create a sharp instance from the file buffer
+      let converted = sharp(file.buffer);
 
-      // Check if the requested format is supported by Sharp and apply conversion
-      const supportedFormats = ["jpeg", "png", "webp", "avif", "jxl"];
-      if (supportedFormats.includes(format)) {
-        converted = converted.toFormat(format, { quality });
-      } else {
-        console.warn(`Unsupported format requested for ${originalname}: ${format}. Skipping.`);
-        status = "Unsupported Format";
-        errorMessage = `Unsupported format: ${format}`;
-      }
+      // Check if the requested format is supported by Sharp and apply conversion
+      // Note: JXL support in Sharp might require specific build configurations.
+      const supportedFormats = ["jpeg", "png", "webp", "avif", "jxl"];
+      if (supportedFormats.includes(format)) {
+        // Apply the selected format and quality
+        converted = converted.toFormat(format, { quality });
+      } else {
+        console.warn(`Unsupported format requested for ${originalname}: ${format}. Skipping.`);
+        status = "Unsupported Format";
+        errorMessage = `Unsupported format: ${format}`;
+      }
 
-      // Only attempt to convert and store if format was supported
-      if (status !== "Unsupported Format") {
-          const buffer = await converted.toBuffer();
-          compressedSize = buffer.length; // Compressed size in bytes
-          status = "Complete";
+      // Only attempt to convert and store if the format was supported and no initial error
+      if (status !== "Unsupported Format") {
+          const buffer = await converted.toBuffer(); // Perform the conversion
+          compressedSize = buffer.length; // Get the size of the compressed buffer
+          status = "Complete"; // Set status to Complete on success
 
-          // Store the processed buffer temporarily
-          processedImages[filename] = buffer;
+          // Store the processed buffer temporarily using the output filename as the key
+          processedImages[outputFilename] = buffer;
 
-          console.log(`Successfully processed: ${originalname} -> ${filename}. Original size: ${originalSize} bytes, Compressed size: ${compressedSize} bytes.`);
-      }
+          console.log(`Successfully processed: ${originalname} -> ${outputFilename}. Original size: ${originalSize} bytes, Compressed size: ${compressedSize} bytes.`);
+      }
 
-    } catch (err) {
-      // Catch errors during sharp processing for a specific file
-      console.error(`Error processing ${originalname}:`, err.message);
-      if (err.stack) {
-          console.error(err.stack);
-      }
-      status = "Error";
-      errorMessage = err.message;
-    }
+    } catch (err) {
+      // Catch any errors that occur during the sharp processing for this specific file
+      console.error(`Error processing ${originalname}:`, err.message);
+      if (err.stack) {
+          console.error(err.stack); // Log stack trace for debugging
+      }
+      status = "Error"; // Set status to Error
+      errorMessage = err.message; // Store the error message
+    }
 
-    // Return result for this file
-    return {
-        name: originalname,
-        originalSize: originalSize,
-        compressedSize: compressedSize,
-        status: status,
-        errorMessage: errorMessage // Include error message in the result
-    };
-  });
+    // Return a result object for this file, including the outputFilename
+    return {
+        name: originalname, // Keep original name for frontend display
+        outputFilename: outputFilename, // *** Include the calculated output filename ***
+        originalSize: originalSize,
+        compressedSize: compressedSize,
+        status: status,
+        errorMessage: errorMessage // Include error message in the result
+    };
+  });
 
-  // Wait for all processing promises to settle (either resolve or reject)
-  const results = await Promise.all(processingPromises);
+  // Wait for all processing promises to settle (either resolve or reject)
+  const results = await Promise.all(processingPromises);
 
-  console.log(`Finished parallel processing. Sending results for ${results.length} files.`);
+  console.log(`Finished parallel processing. Sending results for ${results.length} files.`);
 
-  // Send the processing results as a JSON response
-  res.json(results);
+  // Send the processing results as a JSON response back to the frontend
+  res.json(results);
 
-  // NOTE: The processedImages object now holds the buffers of the successfully
-  // converted images. The /download/:filename route uses this storage.
-  // The "Download All" zip functionality is implemented in the new /download-all-zip route below.
+  // NOTE: The processedImages object now holds the buffers of the successfully
+  // converted images, keyed by their output filename.
+  // The /download/:filename and /download-all-zip routes use this storage.
 });
 
 // Route to download individual processed images
 app.get("/download/:filename", (req, res) => {
-    const filename = req.params.filename;
-    const imageBuffer = processedImages[filename];
+    const filename = req.params.filename; // This is the output filename requested by the frontend
+    const imageBuffer = processedImages[filename]; // Retrieve the buffer using the output filename
 
-    if (imageBuffer) {
-        // Determine Content-Type based on file extension
-        const ext = path.extname(filename).toLowerCase();
-        let contentType = 'application/octet-stream'; // Default
-        if (ext === '.jpeg' || ext === '.jpg') contentType = 'image/jpeg';
-        else if (ext === '.png') contentType = 'image/png';
-        else if (ext === '.webp') contentType = 'image/webp';
-        else if (ext === '.avif') contentType = 'image/avif';
-        else if (ext === '.jxl') contentType = 'image/jxl'; // Note: JXL support might vary
+    if (imageBuffer) {
+        // Determine Content-Type based on file extension for correct download
+        const ext = path.extname(filename).toLowerCase();
+        let contentType = 'application/octet-stream'; // Default to a generic type
+        if (ext === '.jpeg' || ext === '.jpg') contentType = 'image/jpeg';
+        else if (ext === '.png') contentType = 'image/png';
+        else if (ext === '.webp') contentType = 'image/webp';
+        else if (ext === '.avif') contentType = 'image/avif';
+        else if (ext === '.jxl') contentType = 'image/jxl'; // Note: JXL support might vary
 
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.send(imageBuffer); // Send the image buffer
-        console.log(`Serving file for download: ${filename}`);
-    } else {
-        console.warn(`File not found for download: ${filename}`);
-        res.status(404).send("File not found.");
-    }
+        // Set headers for file download
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(imageBuffer); // Send the image buffer as the response body
+        console.log(`Serving file for download: ${filename}`);
+    } else {
+        console.warn(`File not found for download: ${filename}`);
+        res.status(404).send("File not found."); // Send a 404 response if the file is not in temporary storage
+    }
 });
 
-// New route to download all processed images as a zip file
+// Route to download all processed images as a zip file
 app.get("/download-all-zip", (req, res) => {
-    const archive = archiver('zip', {
-        zlib: { level: 6 } // Compression level
-    });
+    // Create a new zip archive
+    const archive = archiver('zip', {
+        zlib: { level: 6 } // Set compression level (optional)
+    });
 
-    // Set response headers for a zip file download
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="compressed_images.zip"');
+    // Set response headers for a zip file download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="compressed_images.zip"');
 
-    // Pipe the archive output to the response
-    archive.pipe(res);
+    // Pipe the archive output directly to the response stream
+    archive.pipe(res);
 
-    // Add files from the processedImages temporary storage to the archive
-    const filenames = Object.keys(processedImages);
-    if (filenames.length === 0) {
-        console.warn("No processed images available for zipping.");
-        // Send an empty zip or an error, depending on desired behavior
-        archive.finalize(); // Finalize an empty archive
-        return; // Exit the function
-    }
+    // Add files from the processedImages temporary storage to the archive
+    const filenames = Object.keys(processedImages);
+    if (filenames.length === 0) {
+        console.warn("No processed images available for zipping.");
+        // If no files, finalize an empty archive and exit
+        archive.finalize();
+        return;
+    }
 
-    filenames.forEach(filename => {
-        const buffer = processedImages[filename];
-        archive.append(buffer, { name: filename });
-        console.log(`Adding ${filename} to zip archive.`);
-    });
+    filenames.forEach(filename => {
+        const buffer = processedImages[filename];
+        // Append the buffer to the archive with the correct filename
+        archive.append(buffer, { name: filename });
+        console.log(`Adding ${filename} to zip archive.`);
+    });
 
-    // Finalize the archive
-    archive.finalize();
-    console.log("Zip archive finalized and sent.");
+    // Finalize the archive - this triggers the piping to the response
+    archive.finalize();
+    console.log("Zip archive finalized and sent.");
 
-    // NOTE: In a production app, you might want to clear processedImages
-    // after the zip is successfully sent, or use a more robust temporary storage
-    // that handles cleanup.
+    // NOTE: In a production app, you might want to clear processedImages
+    // after the zip is successfully sent, or use a more robust temporary storage
+    // that handles cleanup based on sessions or timestamps.
 });
 
 
-// Start the Express server
+// Start the Express server and listen on the specified port
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
