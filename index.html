@@ -14,26 +14,26 @@
     <link rel="canonical" href="https://jpg-to-png-converter.onrender.com/">
 
     <link rel="icon" href="/logo.png" type="image/png">
-
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jpg-to-png-converter.onrender.com/">
     <meta property="og:title" content="Universal Image Converter | Compress & Convert Images Online">
     <meta property="og:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="og:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg">
-    <meta property="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg"> <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://jpg-to-png-converter.onrender.com/">
     <meta property="twitter:title" content="Universal Image Converter | Compress & Convert Images Online">
     <meta property="twitter:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="twitter:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg">
-    <meta name="theme-color" content="#3b82f6">
+    <meta property="twitter:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg"> <meta name="theme-color" content="#3b82f6">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"></noscript>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            /* Add some basic styles here that are critical for initial layout
+               if you were inlining critical CSS. For this example, we rely
+               on the async loading for simplicity. */
         }
         /* Custom styles for the range input thumb */
         input[type="range"]::-webkit-slider-thumb {
@@ -67,8 +67,8 @@
         }
          input[type="range"]::-moz-range-thumb:hover {
              background: #2563eb; /* blue-600 on hover */
-             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
+             border-color: #2563eb; /* blue-600 */
+         }
 
 
         /* Style for the file entry icon */
@@ -110,6 +110,7 @@
         .file-entry {
              border-radius: 0.5rem; /* Match Tailwind rounded-md */
              transition: transform 0.1s ease-in-out; /* Subtle hover effect */
+             cursor: grab; /* Indicate draggable */
         }
          .file-entry:hover {
              transform: translateY(-2px); /* Lift slightly on hover */
@@ -125,6 +126,49 @@
            .status.text-red-600 {
               font-weight: 700; /* Bold for error */
           }
+
+          /* Class for the element being dragged */
+          .dragging {
+              opacity: 0.5; /* Make the dragged item semi-transparent */
+              border: 2px dashed #3b82f6; /* Add a dashed border while dragging */
+          }
+
+          /* Custom styles for the format selection buttons */
+          .format-button-group {
+              display: flex; /* Arrange buttons in a row */
+              gap: 8px; /* Space between buttons */
+              flex-wrap: wrap; /* Allow wrapping on smaller screens */
+          }
+
+          .format-button {
+              flex-grow: 1; /* Allow buttons to grow and fill space */
+              text-align: center;
+              padding: 10px 15px;
+              border: 1px solid #d1d5db; /* gray-300 */
+              border-radius: 0.375rem; /* rounded-md */
+              background-color: #fff; /* white */
+              color: #4b5563; /* gray-700 */
+              font-weight: 600; /* semi-bold */
+              cursor: pointer;
+              transition: all 0.15s ease-in-out;
+          }
+
+          .format-button:hover {
+              background-color: #f3f4f6; /* gray-100 */
+              border-color: #9ca3af; /* gray-400 */
+          }
+
+          .format-button.selected {
+              background-color: #3b82f6; /* blue-500 */
+              color: #fff; /* white */
+              border-color: #3b82f6; /* blue-500 */
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+
+           .format-button.selected:hover {
+               background-color: #2563eb; /* blue-600 */
+               border-color: #2563eb; /* blue-600 */
+           }
 
           /* Removed progress bar styles */
     </style>
@@ -153,12 +197,14 @@
     <div class="max-w-3xl mx-auto py-10 px-4">
         <div class="text-center mb-8"> <img src="/logo.png" alt="Universal Image Converter Logo" class="h-20 mx-auto mb-4 rounded"> <h1 class="text-4xl font-bold text-gray-800">Universal Image Converter</h1> <p class="text-gray-600 mt-2">Compress and convert your images quickly and easily.</p> </div>
 
-        <div class="mb-6 p-4 bg-white rounded-md shadow-sm"> <label for="format" class="block mb-2 font-semibold text-gray-700">Select output format:</label> <select id="format" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"> <option value="image/jpeg">JPEG</option>
-                <option value="image/png">PNG</option>
-                <option value="image/webp">WebP</option>
-                <option value="image/avif">AVIF</option>
-                <option value="image/jxl">JXL</option>
-            </select>
+        <div class="mb-6 p-4 bg-white rounded-md shadow-sm">
+            <label class="block mb-2 font-semibold text-gray-700">Select output format:</label>
+            <div id="formatButtonGroup" class="format-button-group">
+                <button class="format-button" data-format="avif">AVIF</button>
+                <button class="format-button selected" data-format="jpeg">JPEG</button> <button class="format-button" data-format="jxl">JPEG XL</button>
+                <button class="format-button" data-format="png">PNG</button>
+                <button class="format-button" data-format="webp">WebP</button>
+            </div>
         </div>
 
         <div class="mb-6 p-4 bg-white rounded-md shadow-sm"> <label for="quality" class="block mb-2 font-semibold text-gray-700">Quality:
@@ -169,6 +215,11 @@
         <div id="dropzone" class="border-2 border-dashed border-blue-300 p-8 text-center rounded-lg cursor-pointer bg-white hover:bg-blue-50 transition-colors duration-200 ease-in-out mb-6 shadow-md"> <div class="text-blue-500 mb-2"><i class="fas fa-cloud-upload-alt text-4xl"></i></div> <p class="text-blue-700 font-semibold">Drop images here or click to upload</p> <p class="text-sm text-gray-500 mt-1">Supports JPEG, PNG, WebP, AVIF, and JXL</p>
             <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
         </div>
+
+         <div id="processingStatusContainer" class="mb-6 text-center hidden">
+            <p class="text-lg font-semibold text-blue-600"><span id="overallProcessingStatus">Processing...</span></p>
+        </div>
+
 
         <button id="downloadAllBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-3 rounded-md w-full mb-6 transition-colors duration-200 ease-in-out shadow-md hover:shadow-lg hidden"> <i class="fas fa-download mr-3"></i> Download All Compressed Images (Zip)
         </button>
@@ -203,6 +254,23 @@
     </div>
 
     <script>
+        // Function to load CSS asynchronously
+        function loadCSS(href) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            document.head.appendChild(link);
+        }
+
+        // Function to load Script asynchronously
+         function loadScript(src) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = true; // Load script asynchronously
+            document.body.appendChild(script); // Append to body to not block head parsing
+         }
+
+
         // Get references to DOM elements
         const fileInput = document.getElementById("fileInput");
         const dropzone = document.getElementById("dropzone");
@@ -211,16 +279,17 @@
         const qualityValue = document.getElementById("qualityValue");
         const downloadAllBtn = document.getElementById("downloadAllBtn"); // Moved to top
         const clearAllBtn = document.getElementById("clearAllBtn"); // Clear All button
-        // Removed progress bar element references
-        // const progressBarContainer = document.getElementById("progressBarContainer");
-        // const progressBar = document.getElementById("progressBar");
-        // const progressBarText = document.getElementById("progressBarText");
-        // const progressStatusText = document.getElementById("progressStatusText");
+        // Added reference for the new processing status container and text
+        const processingStatusContainer = document.getElementById("processingStatusContainer");
+        const overallProcessingStatus = document.getElementById("overallProcessingStatus");
+        // Added reference for the format buttons
+        const formatButtonGroup = document.getElementById("formatButtonGroup");
+        const formatButtons = formatButtonGroup.querySelectorAll('.format-button');
 
 
         let selectedFiles = []; // Array to hold the files to be processed
-        // Removed processedCount variable
-        // let processedCount = 0;
+        let draggedItem = null; // To store the element being dragged
+        let selectedFormat = 'jpeg'; // Default selected format (matches the initially selected button)
 
 
         // Event listener for the quality slider to update the displayed value
@@ -263,14 +332,27 @@
             selectedFiles = []; // Clear the selected files array
             fileList.innerHTML = ""; // Clear the file list UI
             updateButtonStates(); // Update button states - This will now hide Download All
-             // Removed progress bar hiding logic
-            // progressBarContainer.classList.add('hidden');
-            // progressBar.style.width = '0%';
-            // progressBarText.textContent = '0';
-            // progressStatusText.textContent = 'Processing...';
-            // processedCount = 0;
-            // progressBar.classList.remove('bg-red-500', 'bg-yellow-500');
-            // progressBar.classList.add('bg-blue-500');
+             // Hide the overall processing status on clear
+             processingStatusContainer.classList.add('hidden');
+             overallProcessingStatus.textContent = 'Processing...'; // Reset text
+        });
+
+        // --- Format Button Selection Logic ---
+        formatButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove 'selected' class from all buttons
+                formatButtons.forEach(btn => btn.classList.remove('selected'));
+                // Add 'selected' class to the clicked button
+                button.classList.add('selected');
+                // Update the selectedFormat variable
+                selectedFormat = button.dataset.format;
+                console.log(`Selected format: ${selectedFormat}`); // Log the selected format
+
+                // Automatically trigger processing if files are already selected
+                if (selectedFiles.length > 0) {
+                    processAndDisplayResults();
+                }
+            });
         });
 
 
@@ -281,11 +363,15 @@
                 if (!selectedFiles.some(existingFile => existingFile.name === file.name)) {
                      selectedFiles.push(file);
                      displayFileEntry(file); // Create and display the file entry UI
+                     // Explicitly hide download all when a file entry is added
+                     downloadAllBtn.classList.add('hidden');
                 } else {
                     console.warn(`Skipping duplicate file: ${file.name}`);
                 }
             });
-            updateButtonStates(); // Update button states based on file count - This will hide Download All initially
+            // Explicitly hide download all when files are added (redundant but safe)
+            downloadAllBtn.classList.add('hidden');
+            updateButtonStates(); // Update button states based on file count - This will now hide Download All initially
 
             // *** Automatically trigger processing after adding files ***
             if (selectedFiles.length > 0) {
@@ -296,8 +382,10 @@
         // Function to display a single file entry in the UI
         function displayFileEntry(file) {
             const fileEntry = document.createElement("div");
+            // Add draggable attribute and class
             fileEntry.className = "file-entry border rounded-md p-3 mb-2 bg-white flex items-center justify-between shadow-sm";
             fileEntry.dataset.fileName = file.name; // Store filename for easy lookup
+            fileEntry.setAttribute('draggable', true); // Make the element draggable
 
             const fileSizeKB = (file.size / 1024).toFixed(2);
 
@@ -331,6 +419,7 @@
              const downloadIndividualBtn = fileEntry.querySelector(".download-individual-btn");
              downloadIndividualBtn.onclick = () => {
                  console.log(`Attempted download for ${file.name} before ready.`);
+                 // NOTE: Using alert for simplicity, consider a custom message box for better UX
                  alert(`Download link for ${file.name} is not yet ready.`);
              };
 
@@ -354,6 +443,13 @@
                  fileIcon.classList.remove('hidden');
              };
             reader.readAsDataURL(file);
+
+            // Add drag and drop event listeners to the file entry
+            fileEntry.addEventListener('dragstart', handleDragStart);
+            fileEntry.addEventListener('dragover', handleDragOver);
+            fileEntry.addEventListener('dragleave', handleDragLeave);
+            fileEntry.addEventListener('drop', handleDrop);
+            fileEntry.addEventListener('dragend', handleDragEnd);
         }
 
         // Function to remove a file entry from the list
@@ -381,11 +477,13 @@
             }
 
             // *** Hide downloadAllBtn if there are no files in the list ***
+            // The logic for showing/hiding when files are present is now primarily in processAndDisplayResults
             if (fileEntryCount === 0) {
                  downloadAllBtn.classList.add('hidden');
                  console.log("Download All button hidden: No file entries in UI."); // Log when hidden
                  // Reset click handler to placeholder if button is hidden
                  downloadAllBtn.onclick = () => {
+                     // NOTE: Using alert for simplicity, consider a custom message box for better UX
                     alert("Download All functionality is not yet fully implemented in this version.");
                  };
             }
@@ -398,7 +496,7 @@
             const fileEntryElement = fileList.querySelector(`[data-file-name="${fileName}"]`);
             if (fileEntryElement) {
                 const statusElement = fileEntryElement.querySelector(".status");
-                // Add spinner for processing status
+                // Add spinner for processing status (retained)
                 if (statusText === "Processing...") {
                     statusElement.innerHTML = `<span class="spinner"></span> ${statusText}`;
                 } else if (isError) { // Display error message if status is Error
@@ -419,6 +517,7 @@
                      // Reset click handler on error
                      downloadIndividualBtn.onclick = () => {
                          console.log(`Attempted download for ${fileName} on error status.`);
+                         // NOTE: Using alert for simplicity, consider a custom message box for better UX
                          alert(`Download link for ${fileName} is not available due to processing error.`);
                      };
                 } else if (statusText === "Complete") {
@@ -427,7 +526,8 @@
                      downloadIndividualBtn.classList.remove('hidden'); // Show download button on complete
 
                      // *** Update individual download button click handler ***
-                     const format = document.getElementById("format").value.split("/")[1];
+                     // Use the globally selectedFormat variable
+                     const format = selectedFormat;
                      // Need to get the *processed* filename from the backend result, not reconstruct it.
                      // Assuming the backend result includes the final filename.
                      // For now, reconstructing based on original name and selected format.
@@ -450,6 +550,7 @@
                      // Reset click handler for non-complete states
                      downloadIndividualBtn.onclick = () => {
                          console.log(`Attempted download for ${fileName} before complete status.`);
+                         // NOTE: Using alert for simplicity, consider a custom message box for better UX
                          alert(`Download link for ${fileName} is not yet ready.`);
                      };
                 }
@@ -479,7 +580,8 @@
         // Async function to handle image processing and display results
         async function processAndDisplayResults() {
             const files = selectedFiles; // Use the selectedFiles array
-            const format = document.getElementById("format").value.split("/")[1];
+            // Use the globally selectedFormat variable
+            const format = selectedFormat;
             const quality = qualityInput.value;
 
             if (files.length === 0) {
@@ -488,16 +590,23 @@
                 return;
             }
 
-            // Update status to Processing for all files
+            // Show and update overall processing status text
+            processingStatusContainer.classList.remove('hidden');
+            overallProcessingStatus.textContent = 'Processing...';
+
+
+            // Update status to Processing for all files (this adds individual spinners)
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
-            downloadAllBtn.classList.add('hidden'); // Hide download all button at the start of processing
+            // downloadAllBtn.classList.add('hidden'); // This is already handled in addFiles now
              console.log("Download All button hidden at start of processing."); // Log when hidden
 
 
             const formData = new FormData();
-            files.forEach(file => formData.append("images", file));
+            // Append files in the current order of the selectedFiles array
+            selectedFiles.forEach(file => formData.append("images", file));
 
             try {
+                // Use the globally selectedFormat variable in the fetch URL
                 const response = await fetch(`/compress?format=${format}&quality=${quality}`, {
                     method: "POST",
                     body: formData,
@@ -517,7 +626,10 @@
                          // Set a generic error status on the frontend
                          files.forEach(file => updateFileStatus(file.name, "Error", true, 'Server error.'));
                     }
+                    // NOTE: Using alert for simplicity, consider a custom message box for better UX
                     alert(errorDetails);
+                     // Update overall status text on failure
+                     overallProcessingStatus.textContent = 'Processing Failed';
 
 
                 } else {
@@ -551,6 +663,9 @@
                               // Trigger download by navigating to the new backend download-all-zip route
                               window.open('/download-all-zip', '_blank');
                          };
+                         // Hide overall status on complete success
+                         processingStatusContainer.classList.add('hidden');
+                         overallProcessingStatus.textContent = 'Processing Complete!'; // Set final status text (will be hidden)
 
 
                     } else {
@@ -559,22 +674,95 @@
                          console.log("Download All button hidden: Not all files complete or no results."); // Log when hidden
                          // Reset click handler to placeholder if button is hidden
                          downloadAllBtn.onclick = () => {
+                             // NOTE: Using alert for simplicity, consider a custom message box for better UX
                             alert("Download All functionality is not yet fully implemented in this version.");
                          };
+
+                         // Update overall status text on partial success/failure
+                         if (files.length > 0) {
+                              overallProcessingStatus.textContent = `Processed ${successfullyProcessedCount}/${files.length} files (with errors)`;
+                         } else {
+                             // Should not happen if files.length === 0 check at start works
+                             processingStatusContainer.classList.add('hidden');
+                         }
                     }
                 }
 
             } catch (error) {
                 // This catch block handles network errors or errors thrown by response.json()
+                // NOTE: Using alert for simplicity, consider a custom message box for better UX
                 alert(`An error occurred during processing: ${error.message}`);
                 console.error("Fetch error:", error);
                  // Set status to Error for all files if a general fetch error occurs
                  files.forEach(file => updateFileStatus(file.name, "Error", true, error.message));
+                 // Update overall status text on failure
+                 overallProcessingStatus.textContent = 'Processing Failed';
             } finally {
                  // The clearAllBtn visibility is handled correctly within updateButtonStates
                  // when files are added or removed.
             }
         }
+
+        // --- Drag and Drop Reordering Logic ---
+
+        let draggedItem = null; // To store the element being dragged
+
+        function handleDragStart(e) {
+            draggedItem = e.target; // Store the element being dragged
+            e.dataTransfer.effectAllowed = 'move'; // Specify the drag effect
+            e.dataTransfer.setData('text/plain', e.target.dataset.fileName); // Pass the filename
+            setTimeout(() => {
+                draggedItem.classList.add('dragging'); // Add a class for styling (e.g., opacity)
+            }, 0); // Use a timeout to allow the drag image to be created before changing style
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault(); // Prevent default to allow drop
+            e.dataTransfer.dropEffect = 'move'; // Specify the drop effect
+
+            const targetItem = e.target.closest('.file-entry'); // Get the closest file entry element
+            if (targetItem && targetItem !== draggedItem) {
+                // Determine if dragging above or below the target item
+                const boundingBox = targetItem.getBoundingClientRect();
+                const offset = boundingBox.y + (boundingBox.height / 2);
+
+                if (e.clientY > offset) {
+                    // Dragging below the target
+                    fileList.insertBefore(draggedItem, targetItem.nextSibling);
+                } else {
+                    // Dragging above the target
+                    fileList.insertBefore(draggedItem, targetItem);
+                }
+            }
+        }
+
+        function handleDragLeave(e) {
+            // Remove any visual indicators if needed (not strictly necessary with current approach)
+        }
+
+        function handleDrop(e) {
+            e.preventDefault(); // Prevent default drop behavior
+            // The actual DOM manipulation is done in dragover, so just clean up here
+        }
+
+        function handleDragEnd() {
+            draggedItem.classList.remove('dragging'); // Remove the dragging class
+            draggedItem = null; // Clear the dragged item reference
+
+            // --- Update the selectedFiles array order to match the DOM ---
+            const fileEntries = fileList.querySelectorAll('.file-entry');
+            const newSelectedFilesOrder = [];
+            fileEntries.forEach(entry => {
+                const fileName = entry.dataset.fileName;
+                const file = selectedFiles.find(f => f.name === fileName);
+                if (file) {
+                    newSelectedFilesOrder.push(file);
+                }
+            });
+            selectedFiles = newSelectedFilesOrder;
+            console.log("Selected files order updated:", selectedFiles.map(f => f.name)); // Log the new order
+        }
+
 
         // Initialize button states on page load
         updateButtonStates();
@@ -598,6 +786,30 @@
                 return filePath.substring(lastDot);
             }
         };
+
+        // Function to load CSS asynchronously
+        function loadCSS(href) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            document.head.appendChild(link);
+        }
+
+        // Function to load Script asynchronously
+         function loadScript(src) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = true; // Load script asynchronously
+            document.body.appendChild(script); // Append to body to not block head parsing
+         }
+
+        // Load CSS and Scripts asynchronously after the DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+             loadCSS("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
+             // Tailwind CSS is a script, so load it as a script
+             loadScript("https://cdn.tailwindcss.com");
+        });
+
 
     </script>
 </body>
