@@ -1,0 +1,5 @@
+    User-agent: *
+    Allow: /
+
+    Sitemap: https://jpg-to-png-converter.onrender.com/sitemap.xml  # Add this line to point to your sitemap
+    
