@@ -5,35 +5,35 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-    <title>Universal Image Converter | Compress & Convert Images Online</title>
+    <title>Free Online Image Converter & Compressor | Convert JPG, PNG, WebP, AVIF, JXL</title>
 
-    <meta name="description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
+    <meta name="description" content="Easily compress and convert images online with our free Universal Image Converter. Reduce image size (to 2MB, 30KB, 5KB, etc.), convert formats (JPG to PNG, PNG to JPG, WebP, AVIF, JXL), and batch process images quickly. Your go-to online image optimizer and resizer.">
 
-    <meta name="keywords" content="image converter, compress image, reduce image size, online image converter, free image compressor, batch image converter, convert image to jpeg, convert image to png, convert image to webp, convert image to avif, convert image to jxl, image optimization">
+    <meta name="keywords" content="image converter, compress image, reduce image size, online image converter, free image compressor, batch image converter, convert image to jpeg, convert image to png, convert image to webp, convert image to avif, convert image to jxl, image optimization, resize image, convert jpg to png, convert png to jpg, convert pdn to jpg, convert jpe to jpg, convert jpe to png, convert jpf to jpg, convert image size, 2mb image, 30kb image, 5kb image, 180kb image, 400kb image, 4mb image, 150kb photo size, 800x800 pixels, 64x64 icon, 256x256 png">
 
     <link rel="canonical" href="https://jpg-to-png-converter.onrender.com/">
 
     <link rel="icon" href="/logo.png" type="image/png">
+
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jpg-to-png-converter.onrender.com/">
-    <meta property="og:title" content="Universal Image Converter | Compress & Convert Images Online">
-    <meta property="og:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="og:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg"> <meta property="twitter:card" content="summary_large_image">
+    <meta property="og:title" content="Free Online Image Converter & Compressor | Convert JPG, PNG, WebP, AVIF, JXL">
+    <meta property="og:description" content="Easily compress and convert images online with our free Universal Image Converter. Reduce image size (to 2MB, 30KB, 5KB, etc.), convert formats (JPG to PNG, PNG to JPG, WebP, AVIF, JXL), and batch process images quickly. Your go-to online image optimizer and resizer.">
+    <meta property="og:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg">
+    <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://jpg-to-png-converter.onrender.com/">
-    <meta property="twitter:title" content="Universal Image Converter | Compress & Convert Images Online">
-    <meta property="twitter:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="twitter:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg"> <meta name="theme-color" content="#3b82f6">
+    <meta property="twitter:title" content="Free Online Image Converter & Compressor | Convert JPG, PNG, WebP, AVIF, JXL">
+    <meta property="twitter:description" content="Easily compress and convert images online with our free Universal Image Converter. Reduce image size (to 2MB, 30KB, 5KB, etc.), convert formats (JPG to PNG, PNG to JPG, WebP, AVIF, JXL), and batch process images quickly. Your go-to online image optimizer and resizer.">
+    <meta property="twitter:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg">
+    <meta name="theme-color" content="#3b82f6">
 
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            /* Add some basic styles here that are critical for initial layout
-               if you were inlining critical CSS. For this example, we rely
-               on the async loading for simplicity. */
         }
         /* Custom styles for the range input thumb */
         input[type="range"]::-webkit-slider-thumb {
@@ -67,8 +67,8 @@
         }
          input[type="range"]::-moz-range-thumb:hover {
              background: #2563eb; /* blue-600 on hover */
-             border-color: #2563eb; /* blue-600 */
-         }
+             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
 
 
         /* Style for the file entry icon */
@@ -133,43 +133,6 @@
               border: 2px dashed #3b82f6; /* Add a dashed border while dragging */
           }
 
-          /* Custom styles for the format selection buttons */
-          .format-button-group {
-              display: flex; /* Arrange buttons in a row */
-              gap: 8px; /* Space between buttons */
-              flex-wrap: wrap; /* Allow wrapping on smaller screens */
-          }
-
-          .format-button {
-              flex-grow: 1; /* Allow buttons to grow and fill space */
-              text-align: center;
-              padding: 10px 15px;
-              border: 1px solid #d1d5db; /* gray-300 */
-              border-radius: 0.375rem; /* rounded-md */
-              background-color: #fff; /* white */
-              color: #4b5563; /* gray-700 */
-              font-weight: 600; /* semi-bold */
-              cursor: pointer;
-              transition: all 0.15s ease-in-out;
-          }
-
-          .format-button:hover {
-              background-color: #f3f4f6; /* gray-100 */
-              border-color: #9ca3af; /* gray-400 */
-          }
-
-          .format-button.selected {
-              background-color: #3b82f6; /* blue-500 */
-              color: #fff; /* white */
-              border-color: #3b82f6; /* blue-500 */
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          }
-
-           .format-button.selected:hover {
-               background-color: #2563eb; /* blue-600 */
-               border-color: #2563eb; /* blue-600 */
-           }
-
           /* Removed progress bar styles */
     </style>
 
@@ -181,7 +144,7 @@
       "operatingSystem": "Web",
       "applicationCategory": "https://schema.org/MultimediaApplication",
       "url": "https://jpg-to-png-converter.onrender.com/",
-      "description": "Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.",
+      "description": "Easily compress and convert images online with our free Universal Image Converter. Reduce image size (to 2MB, 30KB, 5KB, etc.), convert formats (JPG to PNG, PNG to JPG, WebP, AVIF, JXL), and batch process images quickly. Your go-to online image optimizer and resizer.",
       "offers": {
         "@type": "Offer",
         "price": "0", // Since the service is free
@@ -195,16 +158,15 @@
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans">
     <div class="max-w-3xl mx-auto py-10 px-4">
-        <div class="text-center mb-8"> <img src="/logo.png" alt="Universal Image Converter Logo" class="h-20 mx-auto mb-4 rounded"> <h1 class="text-4xl font-bold text-gray-800">Universal Image Converter</h1> <p class="text-gray-600 mt-2">Compress and convert your images quickly and easily.</p> </div>
+        <div class="text-center mb-8">
+            <img src="/logo.png" alt="Universal Image Converter Logo - Convert and Compress Images Online" class="h-20 mx-auto mb-4 rounded"> <h1 class="text-4xl font-bold text-gray-800">Universal Image Converter & Image Compressor</h1> <p class="text-gray-600 mt-2">Compress and convert your images quickly and easily online. Convert JPG to PNG, resize images, and more.</p> </div>
 
-        <div class="mb-6 p-4 bg-white rounded-md shadow-sm">
-            <label class="block mb-2 font-semibold text-gray-700">Select output format:</label>
-            <div id="formatButtonGroup" class="format-button-group">
-                <button class="format-button" data-format="avif">AVIF</button>
-                <button class="format-button selected" data-format="jpeg">JPEG</button> <button class="format-button" data-format="jxl">JPEG XL</button>
-                <button class="format-button" data-format="png">PNG</button>
-                <button class="format-button" data-format="webp">WebP</button>
-            </div>
+        <div class="mb-6 p-4 bg-white rounded-md shadow-sm"> <label for="format" class="block mb-2 font-semibold text-gray-700">Select output format:</label> <select id="format" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"> <option value="image/jpeg">JPEG</option>
+                <option value="image/png">PNG</option>
+                <option value="image/webp">WebP</option>
+                <option value="image/avif">AVIF</option>
+                <option value="image/jxl">JXL</option>
+            </select>
         </div>
 
         <div class="mb-6 p-4 bg-white rounded-md shadow-sm"> <label for="quality" class="block mb-2 font-semibold text-gray-700">Quality:
@@ -212,8 +174,7 @@
             <input type="range" id="quality" min="10" max="100" value="75"
                    class="w-full appearance-none h-2 bg-blue-300 rounded-full outline-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 cursor-pointer"> </div>
 
-        <div id="dropzone" class="border-2 border-dashed border-blue-300 p-8 text-center rounded-lg cursor-pointer bg-white hover:bg-blue-50 transition-colors duration-200 ease-in-out mb-6 shadow-md"> <div class="text-blue-500 mb-2"><i class="fas fa-cloud-upload-alt text-4xl"></i></div> <p class="text-blue-700 font-semibold">Drop images here or click to upload</p> <p class="text-sm text-gray-500 mt-1">Supports JPEG, PNG, WebP, AVIF, and JXL</p>
-            <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
+        <div id="dropzone" class="border-2 border-dashed border-blue-300 p-8 text-center rounded-lg cursor-pointer bg-white hover:bg-blue-50 transition-colors duration-200 ease-in-out mb-6 shadow-md"> <div class="text-blue-500 mb-2"><i class="fas fa-cloud-upload-alt text-4xl"></i></div> <p class="text-blue-700 font-semibold">Drop images here or click to upload to compress or convert</p> <p class="text-sm text-gray-500 mt-1">Supports JPEG, PNG, WebP, AVIF, and JXL. Convert JPG to PNG, resize images, and more.</p> <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
         </div>
 
          <div id="processingStatusContainer" class="mb-6 text-center hidden">
@@ -231,22 +192,12 @@
         <button id="clearAllBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-semibold px-6 py-3 rounded-md w-full mt-4 transition-colors duration-200 ease-in-out shadow-md hover:shadow-lg hidden"> <i class="fas fa-trash-alt mr-2"></i> Clear All
         </button>
 
-        <div class="mt-12 p-8 bg-white rounded-lg shadow-lg text-gray-700"> <p class="mb-6 text-lg leading-relaxed">Welcome to the <strong>Universal Image Converter</strong>, your free online tool for <strong>batch image compression</strong> and <strong>format conversion</strong>. Easily <strong>reduce image size</strong> for faster website loading, email attachments, or storage savings.</p>
-            <p class="mb-6 text-lg leading-relaxed">Our converter supports popular formats including <strong>JPEG, PNG, WebP, AVIF, and JXL</strong>. Simply drag and drop your images or click to upload, select your desired output format and quality, and let our tool do the rest. Get high-quality compressed images quickly and efficiently.</p>
-
-            <h2 class="text-2xl font-bold mb-4 mt-8 border-b pb-3 border-gray-300 text-gray-800">Key Features:</h2> <ul class="list-disc list-inside mb-6 text-gray-700 space-y-2"> <li><strong>Batch Processing:</strong> Convert multiple images at once.</li>
-                <li><strong>Multiple Format Support:</strong> Convert to JPEG, PNG, WebP, AVIF, JXL.</li>
-                <li><strong>Adjustable Quality:</strong> Control the level of compression for lossy formats.</li>
-                <li><strong>Fast and Efficient:</strong> Powered by a robust backend for quick conversions.</li>
-                <li><strong>Free to Use:</strong> Optimize your images without any cost.</li>
+        <div class="mt-12 p-8 bg-white rounded-lg shadow-lg text-gray-700"> <p class="mb-6 text-lg leading-relaxed">Welcome to the <strong>Universal Image Converter</strong>, your free online tool for <strong>batch image compression</strong> and <strong>format conversion</strong>. Easily <strong>reduce image size</strong> for faster website loading, email attachments, or storage savings. Use our tool to convert JPG to PNG, resize images to specific dimensions like 800x800 or 256x256, or compress PNG files to under 5KB, 30KB, or 100KB.</p> <p class="mb-6 text-lg leading-relaxed">Our converter supports popular formats including <strong>JPEG, PNG, WebP, AVIF, and JXL</strong>. Convert between formats like JPG to PNG, JPE to JPG, or JPF to JPG. Simply drag and drop your images or click to upload, select your desired output format and quality, and let our tool do the rest. Get high-quality compressed and converted images quickly and efficiently with our online image optimizer.</p> <h2 class="text-2xl font-bold mb-4 mt-8 border-b pb-3 border-gray-300 text-gray-800">Key Features of our Free Image Converter:</h2> <ul class="list-disc list-inside mb-6 text-gray-700 space-y-2"> <li><strong>Batch Processing:</strong> Convert and compress multiple images at once.</li> <li><strong>Multiple Format Support:</strong> Convert to/from JPEG, PNG, WebP, AVIF, JXL, PDN, JPE, JPF.</li> <li><strong>Adjustable Quality:</strong> Control the level of compression for lossy formats to reduce image size.</li> <li><strong>Image Resizer:</strong> Easily resize images to specific pixel dimensions or target file sizes (like under 2MB, 30KB, 5KB).</li> <li><strong>Fast and Efficient:</strong> Powered by a robust backend for quick conversions and compression.</li> <li><strong>Free to Use:</strong> Optimize your images without any cost.</li>
                 <li><strong>Browser-Based:</strong> No software installation required.</li>
             </ul>
 
-             <h2 class="text-2xl font-bold mb-4 mt-8 border-b pb-3 border-gray-300 text-gray-800">How to Use:</h2> <ol class="list-decimal list-inside mb-6 text-gray-700 space-y-2"> <li>Drag and drop your images into the dropzone or click to select files.</li>
-                 <li>Choose your desired output format (JPEG, PNG, WebP, AVIF, JXL).</li>
-                 <li>Adjust the quality slider for lossy formats (JPEG, WebP, AVIF, JXL).</li>
-                 <li>Images will be processed automatically.</li>
-                 <li>Download individual compressed images or use the "Download All" button for a zip file (zip download feature coming soon!).</li>
+             <h2 class="text-2xl font-bold mb-4 mt-8 border-b pb-3 border-gray-300 text-gray-800">How to Use our Online Image Compressor:</h2> <ol class="list-decimal list-inside mb-6 text-gray-700 space-y-2"> <li>Drag and drop your images into the dropzone or click to select files.</li>
+                 <li>Choose your desired output format (JPEG, PNG, WebP, AVIF, JXL) or specify target size/dimensions.</li> <li>Adjust the quality slider for lossy formats (JPEG, WebP, AVIF, JXL) for optimal compression.</li> <li>Images will be processed automatically to convert or compress.</li> <li>Download individual compressed images or use the "Download All" button for a zip file (zip download feature coming soon!).</li>
              </ol>
         </div>
 
@@ -282,14 +233,10 @@
         // Added reference for the new processing status container and text
         const processingStatusContainer = document.getElementById("processingStatusContainer");
         const overallProcessingStatus = document.getElementById("overallProcessingStatus");
-        // Added reference for the format buttons
-        const formatButtonGroup = document.getElementById("formatButtonGroup");
-        const formatButtons = formatButtonGroup.querySelectorAll('.format-button');
 
 
         let selectedFiles = []; // Array to hold the files to be processed
         let draggedItem = null; // To store the element being dragged
-        let selectedFormat = 'jpeg'; // Default selected format (matches the initially selected button)
 
 
         // Event listener for the quality slider to update the displayed value
@@ -337,24 +284,6 @@
              overallProcessingStatus.textContent = 'Processing...'; // Reset text
         });
 
-        // --- Format Button Selection Logic ---
-        formatButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove 'selected' class from all buttons
-                formatButtons.forEach(btn => btn.classList.remove('selected'));
-                // Add 'selected' class to the clicked button
-                button.classList.add('selected');
-                // Update the selectedFormat variable
-                selectedFormat = button.dataset.format;
-                console.log(`Selected format: ${selectedFormat}`); // Log the selected format
-
-                // Automatically trigger processing if files are already selected
-                if (selectedFiles.length > 0) {
-                    processAndDisplayResults();
-                }
-            });
-        });
-
 
         // Function to add files to the list and display them
         function addFiles(files) {
@@ -363,14 +292,10 @@
                 if (!selectedFiles.some(existingFile => existingFile.name === file.name)) {
                      selectedFiles.push(file);
                      displayFileEntry(file); // Create and display the file entry UI
-                     // Explicitly hide download all when a file entry is added
-                     downloadAllBtn.classList.add('hidden');
                 } else {
                     console.warn(`Skipping duplicate file: ${file.name}`);
                 }
             });
-            // Explicitly hide download all when files are added (redundant but safe)
-            downloadAllBtn.classList.add('hidden');
             updateButtonStates(); // Update button states based on file count - This will now hide Download All initially
 
             // *** Automatically trigger processing after adding files ***
@@ -419,7 +344,6 @@
              const downloadIndividualBtn = fileEntry.querySelector(".download-individual-btn");
              downloadIndividualBtn.onclick = () => {
                  console.log(`Attempted download for ${file.name} before ready.`);
-                 // NOTE: Using alert for simplicity, consider a custom message box for better UX
                  alert(`Download link for ${file.name} is not yet ready.`);
              };
 
@@ -477,13 +401,11 @@
             }
 
             // *** Hide downloadAllBtn if there are no files in the list ***
-            // The logic for showing/hiding when files are present is now primarily in processAndDisplayResults
             if (fileEntryCount === 0) {
                  downloadAllBtn.classList.add('hidden');
                  console.log("Download All button hidden: No file entries in UI."); // Log when hidden
                  // Reset click handler to placeholder if button is hidden
                  downloadAllBtn.onclick = () => {
-                     // NOTE: Using alert for simplicity, consider a custom message box for better UX
                     alert("Download All functionality is not yet fully implemented in this version.");
                  };
             }
@@ -517,7 +439,6 @@
                      // Reset click handler on error
                      downloadIndividualBtn.onclick = () => {
                          console.log(`Attempted download for ${fileName} on error status.`);
-                         // NOTE: Using alert for simplicity, consider a custom message box for better UX
                          alert(`Download link for ${fileName} is not available due to processing error.`);
                      };
                 } else if (statusText === "Complete") {
@@ -526,8 +447,7 @@
                      downloadIndividualBtn.classList.remove('hidden'); // Show download button on complete
 
                      // *** Update individual download button click handler ***
-                     // Use the globally selectedFormat variable
-                     const format = selectedFormat;
+                     const format = document.getElementById("format").value.split("/")[1];
                      // Need to get the *processed* filename from the backend result, not reconstruct it.
                      // Assuming the backend result includes the final filename.
                      // For now, reconstructing based on original name and selected format.
@@ -550,7 +470,6 @@
                      // Reset click handler for non-complete states
                      downloadIndividualBtn.onclick = () => {
                          console.log(`Attempted download for ${fileName} before complete status.`);
-                         // NOTE: Using alert for simplicity, consider a custom message box for better UX
                          alert(`Download link for ${fileName} is not yet ready.`);
                      };
                 }
@@ -580,8 +499,7 @@
         // Async function to handle image processing and display results
         async function processAndDisplayResults() {
             const files = selectedFiles; // Use the selectedFiles array
-            // Use the globally selectedFormat variable
-            const format = selectedFormat;
+            const format = document.getElementById("format").value.split("/")[1];
             const quality = qualityInput.value;
 
             if (files.length === 0) {
@@ -597,7 +515,7 @@
 
             // Update status to Processing for all files (this adds individual spinners)
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
-            // downloadAllBtn.classList.add('hidden'); // This is already handled in addFiles now
+            downloadAllBtn.classList.add('hidden'); // Hide download all button at the start of processing
              console.log("Download All button hidden at start of processing."); // Log when hidden
 
 
@@ -606,7 +524,6 @@
             selectedFiles.forEach(file => formData.append("images", file));
 
             try {
-                // Use the globally selectedFormat variable in the fetch URL
                 const response = await fetch(`/compress?format=${format}&quality=${quality}`, {
                     method: "POST",
                     body: formData,
@@ -626,7 +543,6 @@
                          // Set a generic error status on the frontend
                          files.forEach(file => updateFileStatus(file.name, "Error", true, 'Server error.'));
                     }
-                    // NOTE: Using alert for simplicity, consider a custom message box for better UX
                     alert(errorDetails);
                      // Update overall status text on failure
                      overallProcessingStatus.textContent = 'Processing Failed';
@@ -674,7 +590,6 @@
                          console.log("Download All button hidden: Not all files complete or no results."); // Log when hidden
                          // Reset click handler to placeholder if button is hidden
                          downloadAllBtn.onclick = () => {
-                             // NOTE: Using alert for simplicity, consider a custom message box for better UX
                             alert("Download All functionality is not yet fully implemented in this version.");
                          };
 
@@ -690,7 +605,6 @@
 
             } catch (error) {
                 // This catch block handles network errors or errors thrown by response.json()
-                // NOTE: Using alert for simplicity, consider a custom message box for better UX
                 alert(`An error occurred during processing: ${error.message}`);
                 console.error("Fetch error:", error);
                  // Set status to Error for all files if a general fetch error occurs
