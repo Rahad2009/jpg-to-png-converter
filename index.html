@@ -232,7 +232,7 @@
         clearAllBtn.addEventListener("click", () => {
             selectedFiles = []; // Clear the selected files array
             fileList.innerHTML = ""; // Clear the file list UI
-            updateButtonStates(); // Update button states
+            updateButtonStates(); // Update button states - This will now hide Download All
         });
 
 
@@ -247,7 +247,7 @@
                     console.warn(`Skipping duplicate file: ${file.name}`);
                 }
             });
-            updateButtonStates(); // Update button states based on file count
+            updateButtonStates(); // Update button states based on file count - This will hide Download All initially
 
             // *** Automatically trigger processing after adding files ***
             if (selectedFiles.length > 0) {
@@ -286,6 +286,7 @@
             // Add event listener to the remove button
             fileEntry.querySelector(".remove-file-btn").addEventListener("click", () => {
                 removeFileEntry(file.name);
+                updateButtonStates(); // Update button states - This will now hide Download All
             });
 
             // Initial click handler for the individual download button (shows alert)
@@ -294,6 +295,7 @@
                  console.log(`Attempted download for ${file.name} before ready.`);
                  alert(`Download link for ${file.name} is not yet ready.`);
              };
+
 
             fileList.appendChild(fileEntry);
 
@@ -326,24 +328,33 @@
             if (fileEntryElement) {
                 fileList.removeChild(fileEntryElement);
             }
-            updateButtonStates(); // Update button states based on file count
+            // updateButtonStates() is called by the remove button event listener now
+            // updateButtonStates(); // Update button states based on file count
         }
 
         // Function to update the state and text of the buttons
         function updateButtonStates() {
             const count = selectedFiles.length;
-            // Removed processBtn text update and disabled state logic
+            const fileEntryCount = fileList.children.length; // Check actual UI elements
 
             // Show/hide Clear All button
-            if (count > 0 || fileList.children.length > 0) { // Show if files selected or results are displayed
+            if (count > 0 || fileEntryCount > 0) { // Show if files selected or results are displayed
                 clearAllBtn.classList.remove('hidden');
             } else {
                 clearAllBtn.classList.add('hidden');
             }
 
-            // *** Removed the line that unconditionally hides downloadAllBtn ***
-            // downloadAllBtn.classList.add('hidden');
-            // console.log("Download All button hidden."); // Log when hidden
+            // *** Hide downloadAllBtn if there are no files in the list ***
+            if (fileEntryCount === 0) {
+                 downloadAllBtn.classList.add('hidden');
+                 console.log("Download All button hidden: No file entries in UI."); // Log when hidden
+                 // Reset click handler to placeholder if button is hidden
+                 downloadAllBtn.onclick = () => {
+                    alert("Download All functionality is not yet fully implemented in this version.");
+                 };
+            }
+             // Note: The logic to *show* the downloadAllBtn when all files are complete
+             // remains in the processAndDisplayResults function.
         }
 
         // Function to update the status of a specific file entry in the UI
