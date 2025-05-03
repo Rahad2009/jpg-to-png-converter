@@ -206,11 +206,12 @@
                 removeFileEntry(file.name);
             });
 
-            // Add event listener for the individual download button (will be updated after processing)
+            // *** Changed from addEventListener to onclick = ***
+            // Initial click handler for the individual download button (shows alert)
              const downloadIndividualBtn = fileEntry.querySelector(".download-individual-btn");
-             downloadIndividualBtn.addEventListener("click", () => {
+             downloadIndividualBtn.onclick = () => {
                  alert(`Download link for ${file.name} is not yet ready.`);
-             });
+             };
 
 
             fileList.appendChild(fileEntry);
