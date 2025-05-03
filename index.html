@@ -19,11 +19,13 @@
     <meta property="og:url" content="https://jpg-to-png-converter.onrender.com/">
     <meta property="og:title" content="Universal Image Converter | Compress & Convert Images Online">
     <meta property="og:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="og:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg"> <meta property="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg">
+    <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://jpg-to-png-converter.onrender.com/">
     <meta property="twitter:title" content="Universal Image Converter | Compress & Convert Images Online">
     <meta property="twitter:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
-    <meta property="twitter:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg"> <meta name="theme-color" content="#3b82f6">
+    <meta property="twitter:image" content="https://jpg-to-png-converter.onrender.com/social-share-image.jpg">
+    <meta name="theme-color" content="#3b82f6">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
@@ -135,18 +137,14 @@
       "operatingSystem": "Web",
       "applicationCategory": "https://schema.org/MultimediaApplication",
       "url": "https://jpg-to-png-converter.onrender.com/",
-      "description": "Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality."
-      // You can add more properties here if applicable, for example:
-      // "aggregateRating": {
-      //   "@type": "AggregateRating",
-      //   "ratingValue": "4.5", // Replace with actual rating
-      //   "reviewCount": "100" // Replace with actual review count
-      // },
-      // "offers": {
-      //   "@type": "Offer",
-      //   "price": "0",
-      //   "priceCurrency": "USD"
-      // }
+      "description": "Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0", // Since the service is free
+        "priceCurrency": "USD" // Or the relevant currency if applicable
+        // Add more offer details if available, e.g., "availability", "validFrom", etc.
+      }
+      // Removed "aggregateRating" block
     }
     </script>
 
@@ -547,7 +545,7 @@
                          // Update Download All button text with count
                          downloadAllBtn.textContent = `Download All (${successfullyProcessedCount} image${successfullyProcessedCount === 1 ? '' : 's'})`;
 
-                         // *** Update Download All button click handler ***
+                         // *** Update individual download button click handler ***
                          downloadAllBtn.onclick = () => {
                               console.log("Triggering Download All zip."); // Log when Download All is triggered
                               // Trigger download by navigating to the new backend download-all-zip route
