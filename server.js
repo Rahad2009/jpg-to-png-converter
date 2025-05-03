@@ -47,7 +47,7 @@ app.post("/compress", upload.array("images"), async (req, res) => {
 
   // Create a zip archiver instance
   const archive = archiver("zip", {
-    zlib: { level: 9 } // Set compression level
+    zlib: { level: 6 } // <--- REDUCED COMPRESSION LEVEL FROM 9 TO 6
   });
 
   // Pipe the archive output directly to the response stream
