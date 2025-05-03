@@ -109,8 +109,8 @@
         }
         .file-entry {
              border-radius: 0.5rem; /* Match Tailwind rounded-md */
+             /* Removed drag indicator styles */
              transition: transform 0.1s ease-in-out; /* Subtle hover effect */
-             cursor: grab; /* Indicate draggable */
         }
          .file-entry:hover {
              transform: translateY(-2px); /* Lift slightly on hover */
@@ -127,11 +127,8 @@
               font-weight: 700; /* Bold for error */
           }
 
-          /* Class for the element being dragged */
-          .dragging {
-              opacity: 0.5; /* Make the dragged item semi-transparent */
-              border: 2px dashed #3b82f6; /* Add a dashed border while dragging */
-          }
+          /* Removed dragging class styles */
+
 
           /* Removed progress bar styles */
     </style>
@@ -236,7 +233,8 @@
 
 
         let selectedFiles = []; // Array to hold the files to be processed
-        let draggedItem = null; // To store the element being dragged
+        // Removed the draggedItem variable declaration
+        // let draggedItem = null;
 
 
         // Event listener for the quality slider to update the displayed value
@@ -307,10 +305,10 @@
         // Function to display a single file entry in the UI
         function displayFileEntry(file) {
             const fileEntry = document.createElement("div");
-            // Add draggable attribute and class
+            // Removed draggable attribute
             fileEntry.className = "file-entry border rounded-md p-3 mb-2 bg-white flex items-center justify-between shadow-sm";
             fileEntry.dataset.fileName = file.name; // Store filename for easy lookup
-            fileEntry.setAttribute('draggable', true); // Make the element draggable
+            // Removed setAttribute('draggable', true);
 
             const fileSizeKB = (file.size / 1024).toFixed(2);
 
@@ -368,12 +366,12 @@
              };
             reader.readAsDataURL(file);
 
-            // Add drag and drop event listeners to the file entry
-            fileEntry.addEventListener('dragstart', handleDragStart);
-            fileEntry.addEventListener('dragover', handleDragOver);
-            fileEntry.addEventListener('dragleave', handleDragLeave);
-            fileEntry.addEventListener('drop', handleDrop);
-            fileEntry.addEventListener('dragend', handleDragEnd);
+            // Removed drag and drop event listeners
+            // fileEntry.addEventListener('dragstart', handleDragStart);
+            // fileEntry.addEventListener('dragover', handleDragOver);
+            // fileEntry.addEventListener('dragleave', handleDragLeave);
+            // fileEntry.addEventListener('drop', handleDrop);
+            // fileEntry.addEventListener('dragend', handleDragEnd);
         }
 
         // Function to remove a file entry from the list
@@ -474,7 +472,7 @@
                      };
                 }
             }
-        }
+         }
 
         // Function to update the size info of a specific file entry in the UI (for reduced size)
         function updateFileSizeInfo(fileName, originalSize, compressedSize, status) {
@@ -617,65 +615,12 @@
             }
         }
 
-        // --- Drag and Drop Reordering Logic ---
-
-        let draggedItem = null; // To store the element being dragged
-
-        function handleDragStart(e) {
-            draggedItem = e.target; // Store the element being dragged
-            e.dataTransfer.effectAllowed = 'move'; // Specify the drag effect
-            e.dataTransfer.setData('text/plain', e.target.dataset.fileName); // Pass the filename
-            setTimeout(() => {
-                draggedItem.classList.add('dragging'); // Add a class for styling (e.g., opacity)
-            }, 0); // Use a timeout to allow the drag image to be created before changing style
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault(); // Prevent default to allow drop
-            e.dataTransfer.dropEffect = 'move'; // Specify the drop effect
-
-            const targetItem = e.target.closest('.file-entry'); // Get the closest file entry element
-            if (targetItem && targetItem !== draggedItem) {
-                // Determine if dragging above or below the target item
-                const boundingBox = targetItem.getBoundingClientRect();
-                const offset = boundingBox.y + (boundingBox.height / 2);
-
-                if (e.clientY > offset) {
-                    // Dragging below the target
-                    fileList.insertBefore(draggedItem, targetItem.nextSibling);
-                } else {
-                    // Dragging above the target
-                    fileList.insertBefore(draggedItem, targetItem);
-                }
-            }
-        }
-
-        function handleDragLeave(e) {
-            // Remove any visual indicators if needed (not strictly necessary with current approach)
-        }
-
-        function handleDrop(e) {
-            e.preventDefault(); // Prevent default drop behavior
-            // The actual DOM manipulation is done in dragover, so just clean up here
-        }
-
-        function handleDragEnd() {
-            draggedItem.classList.remove('dragging'); // Remove the dragging class
-            draggedItem = null; // Clear the dragged item reference
-
-            // --- Update the selectedFiles array order to match the DOM ---
-            const fileEntries = fileList.querySelectorAll('.file-entry');
-            const newSelectedFilesOrder = [];
-            fileEntries.forEach(entry => {
-                const fileName = entry.dataset.fileName;
-                const file = selectedFiles.find(f => f.name === fileName);
-                if (file) {
-                    newSelectedFilesOrder.push(file);
-                }
-            });
-            selectedFiles = newSelectedFilesOrder;
-            console.log("Selected files order updated:", selectedFiles.map(f => f.name)); // Log the new order
-        }
+        // Removed drag and drop reordering functions
+        // function handleDragStart(e) { ... }
+        // function handleDragOver(e) { ... }
+        // function handleDragLeave(e) { ... }
+        // function handleDrop(e) { ... }
+        // function handleDragEnd() { ... }
 
 
         // Initialize button states on page load
