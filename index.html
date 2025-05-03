@@ -296,7 +296,6 @@
                  alert(`Download link for ${file.name} is not yet ready.`);
              };
 
-
             fileList.appendChild(fileEntry);
 
             // Read the file to display a preview
@@ -468,12 +467,24 @@
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json(); // Expect JSON error from backend
-                    alert(`Processing failed: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
-                     // Pass the error message to updateFileStatus for each file
-                     files.forEach(file => updateFileStatus(file.name, "Error", true, errorData.error || 'Processing failed.'));
+                    let errorDetails = `Processing failed: ${response.status} ${response.statusText}.`;
+                    try {
+                        const errorData = await response.json();
+                        errorDetails += ` ${errorData.error || 'Unknown error from server.'}`;
+                         // Pass the error message to updateFileStatus for each file
+                        files.forEach(file => updateFileStatus(file.name, "Error", true, errorData.error || 'Processing failed.'));
+                    } catch (jsonError) {
+                        // If response body is not JSON on a non-OK status
+                        console.error("Failed to parse JSON from error response:", jsonError);
+                        errorDetails += ` Server returned non-JSON error or empty response.`;
+                         // Set a generic error status on the frontend
+                         files.forEach(file => updateFileStatus(file.name, "Error", true, 'Server error.'));
+                    }
+                    alert(errorDetails);
+
                 } else {
-                    const results = await response.json(); // Expect JSON array of results
+                    // Response is OK, expect JSON results
+                    const results = await response.json();
 
                     // Update UI with results for each file
                     let allComplete = true;
@@ -515,16 +526,14 @@
                 }
 
             } catch (error) {
+                // This catch block handles network errors or errors thrown by response.json()
                 alert(`An error occurred during processing: ${error.message}`);
                 console.error("Fetch error:", error);
                  // Set status to Error for all files if a general fetch error occurs
                  files.forEach(file => updateFileStatus(file.name, "Error", true, error.message));
             } finally {
-                 // processBtn is removed, no need to re-enable it.
-                 // updateButtonStates() is called here to ensure Clear All button state is correct
-                 // Removed the call to updateButtonStates() from here as it was hiding the button.
-                 // The clearAllBtn visibility is handled correctly within updateButtonStates
-                 // when files are added or removed.
+                 // updateButtonStates() is called by the remove button event listener now
+                 // updateButtonStates(); // Ensure button states are correct (hides download if needed)
             }
         }
 
