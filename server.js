@@ -3,14 +3,18 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import sharp from "sharp";
-// Removed archiver as this route will return JSON, not a zip directly
 import { fileURLToPath } from "url";
+// No longer need archiver for the /compress route, but might need it for a separate /download-zip route later
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Temporary storage for processed image buffers
+// In a production environment, consider more robust storage (e.g., disk, cloud storage)
+const processedImages = {}; // Object to store { filename: buffer } pairs
 
 // Middleware to serve static files (like your index.html and logo.png)
 app.use(express.static(__dirname));
@@ -26,8 +30,15 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Compression route: Handles POST requests to /compress
-// This route will now process images and return JSON results, NOT a zip file directly.
+// This route processes images and returns JSON results.
 app.post("/compress", upload.array("images"), async (req, res) => {
+  // Clear previous processed images data
+  // NOTE: This simple clearing means only the last batch of processed images is available for download.
+  // For multiple user sessions, you'd need a more sophisticated storage strategy.
+  for (const key in processedImages) {
+      delete processedImages[key];
+  }
+
   // Get format and quality from query parameters
   const format = req.query.format; // Expected: 'jpeg', 'png', 'webp', 'avif', 'jxl'
   const quality = parseInt(req.query.quality, 10) || 75; // Default quality to 75
@@ -41,7 +52,6 @@ app.post("/compress", upload.array("images"), async (req, res) => {
   console.log(`Received ${req.files.length} files for conversion to ${format} with quality ${quality}`); // Log received request details
 
   const results = []; // Array to store processing results for each file
-  const processedFilesData = []; // Array to store processed file buffers and names for potential zipping later
 
   // Process each uploaded file
   for (let file of req.files) {
@@ -51,6 +61,7 @@ app.post("/compress", upload.array("images"), async (req, res) => {
     const filename = `${name}.${format}`; // Output filename
     let status = "Error"; // Default status
     let compressedSize = 0; // Default compressed size
+    let processedBuffer = null; // To store the sharp output buffer
 
     try {
       console.log(`Processing file: ${originalname}`); // Log which file is being processed
@@ -70,10 +81,12 @@ app.post("/compress", upload.array("images"), async (req, res) => {
       }
 
       // Convert the sharp instance back to a buffer
-      const buffer = await converted.toBuffer();
-      compressedSize = buffer.length; // Compressed size in bytes
+      processedBuffer = await converted.toBuffer();
+      compressedSize = processedBuffer.length; // Compressed size in bytes
       status = "Complete";
-      processedFilesData.push({ name: filename, buffer: buffer }); // Store processed data
+
+      // Store the processed buffer temporarily
+      processedImages[filename] = processedBuffer;
 
       console.log(`Successfully processed: ${originalname} -> ${filename}. Original size: ${originalSize} bytes, Compressed size: ${compressedSize} bytes.`);
 
@@ -94,12 +107,33 @@ app.post("/compress", upload.array("images"), async (req, res) => {
 
   // Send the processing results as a JSON response
   res.json(results);
-
-  // NOTE: The processedFilesData array now holds the buffers of the successfully
-  // converted images. You would need a separate route or mechanism to allow the
-  // user to download these as a zip file after they see the results.
-  // This requires further backend and frontend development.
 });
+
+// New route to download individual processed images
+app.get("/download/:filename", (req, res) => {
+    const filename = req.params.filename;
+    const imageBuffer = processedImages[filename];
+
+    if (imageBuffer) {
+        // Determine Content-Type based on file extension
+        const ext = path.extname(filename).toLowerCase();
+        let contentType = 'application/octet-stream'; // Default
+        if (ext === '.jpeg' || ext === '.jpg') contentType = 'image/jpeg';
+        else if (ext === '.png') contentType = 'image/png';
+        else if (ext === '.webp') contentType = 'image/webp';
+        else if (ext === '.avif') contentType = 'image/avif';
+        else if (ext === '.jxl') contentType = 'image/jxl'; // Note: JXL support might vary
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(imageBuffer); // Send the image buffer
+        console.log(`Serving file for download: ${filename}`);
+    } else {
+        console.warn(`File not found for download: ${filename}`);
+        res.status(404).send("File not found.");
+    }
+});
+
 
 // Start the Express server
 app.listen(PORT, () => {
