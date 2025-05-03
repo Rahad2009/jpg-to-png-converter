@@ -1,123 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Universal Image Converter</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Universal Image Converter</title>
+    <link rel="icon" href="/logo.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-900">
-  <div class="max-w-3xl mx-auto py-10 px-4">
-    <h1 class="text-3xl font-bold mb-6 text-center">Universal Image Converter</h1>
+    <div class="max-w-3xl mx-auto py-10 px-4">
+        <div class="text-center mb-6">
+             <img src="https://placehold.co/64x64/E2E8F0/1A202C?text=Logo" alt="Logo" class="h-16 mx-auto mb-2 rounded">
+            <h1 class="text-3xl font-bold">Universal Image Converter</h1>
+        </div>
 
-    <div class="mb-4">
-      <label for="format" class="block mb-1 font-semibold">Select output format:</label>
-      <select id="format" class="w-full border rounded px-3 py-2">
-  <option value="image/jpeg">JPEG</option>
-  <option value="image/png">PNG</option>
-  <option value="image/webp">WebP</option>
-  <option value="image/avif">AVIF</option>
-  <option value="image/jxl">JXL</option>
-</select>
+        <div class="mb-4">
+            <label for="format" class="block mb-1 font-semibold">Select output format:</label>
+            <select id="format" class="w-full border rounded px-3 py-2">
+                <option value="image/jpeg">JPEG</option>
+                <option value="image/png">PNG</option>
+                <option value="image/webp">WebP</option>
+                <option value="image/avif">AVIF</option>
+                <option value="image/jxl">JXL</option>
+            </select>
+        </div>
 
+        <div class="mb-4">
+            <label for="quality" class="block mb-1 font-semibold">Quality:
+                <span id="qualityValue">75%</span> </label>
+            <input type="range" id="quality" min="10" max="100" value="75"
+                   class="w-full appearance-none h-2 bg-blue-500 rounded-full outline-none transition-all duration-150">
+        </div>
+
+        <div id="dropzone" class="border-2 border-dashed border-gray-300 p-6 text-center rounded cursor-pointer bg-white hover:bg-gray-50 mb-4">
+            <p class="text-gray-500"><strong>Drop images here or click to upload</strong></p>
+            <p class="text-sm text-gray-400">Supports JPEG, PNG, WebP, AVIF, and JXL</p>
+            <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
+        </div>
+
+        <div id="preview" class="mb-4 grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+
+        <button onclick="compressImages()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full">
+            Compress & Download
+        </button>
     </div>
 
-    <div class="mb-4">
-      <label for="quality" class="block mb-1 font-semibold">Quality: 
-        <span id="qualityValue">75%</span>
-      </label>
-      <input type="range" id="quality" min="10" max="100" value="75"
-             class="w-full appearance-none h-2 bg-blue-500 rounded-full outline-none transition-all duration-150">
-    </div>
+    <script>
+        // Get references to DOM elements
+        const fileInput = document.getElementById("fileInput");
+        const dropzone = document.getElementById("dropzone");
+        const preview = document.getElementById("preview");
+        const qualityInput = document.getElementById("quality");
+        const qualityValue = document.getElementById("qualityValue");
 
-    <div id="dropzone" class="border-2 border-dashed border-gray-300 p-6 text-center rounded cursor-pointer bg-white hover:bg-gray-50 mb-4">
-      <p class="text-gray-500"><strong>Drop images here or click to upload</strong></p>
-      <p class="text-sm text-gray-400">Supports JPEG, PNG, WebP, AVIF, and JXL</p>
-      <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
-    </div>
+        // Event listener for the quality slider to update the displayed value
+        qualityInput.addEventListener("input", () => {
+            qualityValue.textContent = `${qualityInput.value}%`;
+        });
 
-    <div id="preview" class="mb-4 grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+        // Event listener for the dropzone to trigger the hidden file input when clicked
+        dropzone.addEventListener("click", () => fileInput.click());
 
-    <button onclick="compressImages()"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full">
-      Compress & Download
-    </button>
-  </div>
+        // Prevent default drag behaviors and add visual feedback
+        dropzone.addEventListener("dragover", (e) => {
+            e.preventDefault(); // Prevent default drag behavior
+            dropzone.classList.add("bg-blue-50"); // Add highlight class
+        });
 
-  <script>
-    const fileInput = document.getElementById("fileInput");
-    const dropzone = document.getElementById("dropzone");
-    const preview = document.getElementById("preview");
-    const qualityInput = document.getElementById("quality");
-    const qualityValue = document.getElementById("qualityValue");
+        // Remove visual feedback when dragging leaves the dropzone
+        dropzone.addEventListener("dragleave", () => {
+            dropzone.classList.remove("bg-blue-50"); // Remove highlight class
+        });
 
-    qualityInput.addEventListener("input", () => {
-      qualityValue.textContent = `${qualityInput.value}%`;
-    });
+        // Handle dropped files
+        dropzone.addEventListener("drop", (e) => {
+            e.preventDefault(); // Prevent default drop behavior
+            fileInput.files = e.dataTransfer.files; // Assign dropped files to the file input
+            dropzone.classList.remove("bg-blue-50"); // Remove highlight class
+            showPreview(fileInput.files); // Show previews of dropped files
+        });
 
-    dropzone.addEventListener("click", () => fileInput.click());
+        // Handle files selected via the file input (either by click or drop)
+        fileInput.addEventListener("change", () => showPreview(fileInput.files));
 
-    dropzone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropzone.classList.add("bg-blue-50");
-    });
+        // Function to display image previews
+        function showPreview(files) {
+            preview.innerHTML = ""; // Clear previous previews
+            // Iterate over each selected file
+            Array.from(files).forEach(file => {
+                const reader = new FileReader(); // Create a FileReader instance
+                // Event handler for when the file is read
+                reader.onload = (e) => {
+                    const img = document.createElement("img"); // Create an image element
+                    img.src = e.target.result; // Set the image source to the Data URL
+                    img.className = "object-cover h-32 w-full rounded border"; // Add Tailwind classes for styling
+                    preview.appendChild(img); // Add the image to the preview area
+                };
+                reader.readAsDataURL(file); // Read the file as a Data URL
+            });
+        }
 
-    dropzone.addEventListener("dragleave", () => {
-      dropzone.classList.remove("bg-blue-50");
-    });
+        // Async function to handle image compression and download
+        async function compressImages() {
+            const files = fileInput.files; // Get selected files
+            // Get the selected output format (e.g., 'jpeg', 'png')
+            const format = document.getElementById("format").value.split("/")[1];
+            const quality = qualityInput.value; // Get the selected quality
 
-    dropzone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      fileInput.files = e.dataTransfer.files;
-      dropzone.classList.remove("bg-blue-50");
-      showPreview(fileInput.files);
-    });
+            // Check if any files are selected
+            if (files.length === 0) {
+                alert("Please select images to compress.");
+                return;
+            }
 
-    fileInput.addEventListener("change", () => showPreview(fileInput.files));
+            const formData = new FormData(); // Create a FormData object
+            // Append each selected file to the FormData object
+            Array.from(files).forEach(file => formData.append("images", file));
 
-    function showPreview(files) {
-      preview.innerHTML = "";
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          img.className = "object-cover h-32 w-full rounded border";
-          preview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
+            // Send the files and parameters to the backend compression endpoint
+            const response = await fetch(`/compress?format=${format}&quality=${quality}`, {
+                method: "POST",
+                body: formData, // Send files as FormData
+            });
 
-    async function compressImages() {
-      const files = fileInput.files;
-      const format = document.getElementById("format").value.split("/")[1];
-      const quality = qualityInput.value;
+            // Check if the request was successful
+            if (!response.ok) {
+                alert("Compression failed. Please try again.");
+                return;
+            }
 
-      if (files.length === 0) return alert("Please select images.");
-
-      const formData = new FormData();
-      Array.from(files).forEach(file => formData.append("images", file));
-
-      const response = await fetch(`/compress?format=${format}&quality=${quality}`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        alert("Compression failed.");
-        return;
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "compressed_images.zip";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-  </script>
+            // Get the response as a Blob (assuming the backend returns a file/zip)
+            const blob = await response.blob();
+            // Create a temporary URL for the Blob
+            const url = window.URL.createObjectURL(blob);
+            // Create a temporary anchor element for downloading
+            const a = document.createElement("a");
+            a.href = url; // Set the download URL
+            a.download = `compressed_images.${format === 'jpeg' ? 'zip' : format}`; // Set the default download filename (could be improved)
+            document.body.appendChild(a); // Append the anchor to the body (needed for Firefox)
+            a.click(); // Programmatically click the anchor to trigger download
+            a.remove(); // Clean up the temporary anchor element
+            window.URL.revokeObjectURL(url); // Release the object URL
+        }
+    </script>
 </body>
 </html>
