@@ -84,7 +84,8 @@
         // Handle files selected via the file input (either by click or drop)
         fileInput.addEventListener("change", () => showPreview(fileInput.files));
 
-        // Function to display image previews
+        // Function to display image previews on the client side
+        // This uses FileReader to read the file content as a Data URL for display
         function showPreview(files) {
             preview.innerHTML = ""; // Clear previous previews
             // Iterate over each selected file
@@ -93,7 +94,7 @@
                 // Event handler for when the file is read
                 reader.onload = (e) => {
                     const img = document.createElement("img"); // Create an image element
-                    img.src = e.target.result; // Set the image source to the Data URL
+                    img.src = e.target.result; // Set the image source to the Data URL (client-side preview)
                     img.className = "object-cover h-32 w-full rounded border"; // Add Tailwind classes for styling
                     preview.appendChild(img); // Add the image to the preview area
                 };
@@ -102,6 +103,7 @@
         }
 
         // Async function to handle image compression and download
+        // This function sends the files to a backend endpoint for processing
         async function compressImages() {
             const files = fileInput.files; // Get selected files
             // Get the selected output format (e.g., 'jpeg', 'png')
@@ -114,34 +116,52 @@
                 return;
             }
 
-            const formData = new FormData(); // Create a FormData object
-            // Append each selected file to the FormData object
+            // Create a FormData object to send files and data in a POST request
+            const formData = new FormData();
+            // Append each selected file to the FormData object under the key "images"
             Array.from(files).forEach(file => formData.append("images", file));
 
             // Send the files and parameters to the backend compression endpoint
-            const response = await fetch(`/compress?format=${format}&quality=${quality}`, {
-                method: "POST",
-                body: formData, // Send files as FormData
-            });
+            // The actual image processing happens on the server side at the /compress endpoint
+            try {
+                const response = await fetch(`/compress?format=${format}&quality=${quality}`, {
+                    method: "POST",
+                    body: formData, // Send files as FormData
+                    // No need to set Content-Type header for FormData, browser does it
+                });
 
-            // Check if the request was successful
-            if (!response.ok) {
-                alert("Compression failed. Please try again.");
-                return;
+                // Check if the request was successful (status code 2xx)
+                if (!response.ok) {
+                    // If response is not OK, try to read error message from backend if available
+                    const errorText = await response.text();
+                    alert(`Compression failed: ${response.status} ${response.statusText}. ${errorText || ''}`);
+                    return;
+                }
+
+                // Get the response as a Blob (assuming the backend returns a file/zip)
+                const blob = await response.blob();
+
+                // Create a temporary URL for the Blob
+                const url = window.URL.createObjectURL(blob);
+                // Create a temporary anchor element for downloading
+                const a = document.createElement("a");
+                a.href = url; // Set the download URL
+
+                // Set the default download filename.
+                // This could be improved by reading the filename from the backend's
+                // Content-Disposition header if the backend provides it.
+                a.download = `compressed_images.${format === 'jpeg' ? 'zip' : format}`;
+
+                document.body.appendChild(a); // Append the anchor to the body (needed for some browsers like Firefox)
+                a.click(); // Programmatically click the anchor to trigger download
+                a.remove(); // Clean up the temporary anchor element
+                window.URL.revokeObjectURL(url); // Release the object URL to free up memory
+
+            } catch (error) {
+                // Catch network errors or other issues during the fetch request
+                alert(`An error occurred during compression: ${error.message}`);
+                console.error("Fetch error:", error);
             }
-
-            // Get the response as a Blob (assuming the backend returns a file/zip)
-            const blob = await response.blob();
-            // Create a temporary URL for the Blob
-            const url = window.URL.createObjectURL(blob);
-            // Create a temporary anchor element for downloading
-            const a = document.createElement("a");
-            a.href = url; // Set the download URL
-            a.download = `compressed_images.${format === 'jpeg' ? 'zip' : format}`; // Set the default download filename (could be improved)
-            document.body.appendChild(a); // Append the anchor to the body (needed for Firefox)
-            a.click(); // Programmatically click the anchor to trigger download
-            a.remove(); // Clean up the temporary anchor element
-            window.URL.revokeObjectURL(url); // Release the object URL
         }
     </script>
 </body>
