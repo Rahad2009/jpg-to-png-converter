@@ -234,6 +234,9 @@
         const processingStatusContainer = document.getElementById("processingStatusContainer");
         const overallProcessingStatus = document.getElementById("overallProcessingStatus");
 
+        // Get reference to the format select element
+        const formatSelect = document.getElementById("format");
+
 
         let selectedFiles = []; // Array to hold the files to be processed
         let draggedItem = null; // To store the element being dragged
@@ -508,9 +511,9 @@
                 return;
             }
 
-            // Show and update overall processing status text
+            // Show and update overall processing status text with spinner
             processingStatusContainer.classList.remove('hidden');
-            overallProcessingStatus.textContent = 'Processing...';
+            overallProcessingStatus.innerHTML = `<span class="spinner"></span> Processing...`; // Add spinner here
 
 
             // Update status to Processing for all files (this adds individual spinners)
