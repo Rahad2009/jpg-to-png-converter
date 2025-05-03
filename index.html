@@ -6,6 +6,7 @@
     <title>Universal Image Converter</title>
     <link rel="icon" href="/logo.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* Custom styles for the range input thumb */
         input[type="range"]::-webkit-slider-thumb {
@@ -27,6 +28,14 @@
             cursor: pointer;
             border-radius: 50%;
             border: 2px solid #fff;
+        }
+
+        /* Style for the file entry icon */
+        .file-icon {
+            width: 24px; /* Adjust size as needed */
+            height: 24px; /* Adjust size as needed */
+            margin-right: 12px;
+            color: #6b7280; /* gray-500 */
         }
     </style>
 </head>
@@ -61,12 +70,20 @@
             <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
         </div>
 
+        <button id="processBtn" onclick="processAndDisplayResults()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md w-full transition-colors duration-150 mb-4">
+            Process Images
+        </button>
+
         <div id="fileList" class="mb-4">
             </div>
 
-        <button id="downloadAllBtn" onclick="compressImages()"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md w-full transition-colors duration-150">
-            Compress & Download All
+         <button id="downloadAllBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-full mt-4 transition-colors duration-150 hidden">
+            <i class="fas fa-download mr-2"></i> Download All Compressed Images (Zip)
+        </button>
+
+        <button id="clearAllBtn" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md w-full mt-2 transition-colors duration-150 hidden">
+             <i class="fas fa-trash-alt mr-2"></i> Clear All
         </button>
     </div>
 
@@ -74,10 +91,12 @@
         // Get references to DOM elements
         const fileInput = document.getElementById("fileInput");
         const dropzone = document.getElementById("dropzone");
-        const fileList = document.getElementById("fileList"); // New container for file entries
+        const fileList = document.getElementById("fileList"); // Container for file entries
         const qualityInput = document.getElementById("quality");
         const qualityValue = document.getElementById("qualityValue");
+        const processBtn = document.getElementById("processBtn");
         const downloadAllBtn = document.getElementById("downloadAllBtn");
+        const clearAllBtn = document.getElementById("clearAllBtn"); // Clear All button
 
         let selectedFiles = []; // Array to hold the files to be processed
 
@@ -113,15 +132,26 @@
             fileInput.value = ''; // Clear the file input so the same file can be selected again
         });
 
+        // Event listener for the Clear All button
+        clearAllBtn.addEventListener("click", () => {
+            selectedFiles = []; // Clear the selected files array
+            fileList.innerHTML = ""; // Clear the file list UI
+            updateButtonStates(); // Update button states
+        });
+
+
         // Function to add files to the list and display them
         function addFiles(files) {
             Array.from(files).forEach(file => {
-                // Add file to the selectedFiles array
-                selectedFiles.push(file);
-                // Create and display the file entry UI
-                displayFileEntry(file);
+                // Prevent adding duplicate files by name (simple check)
+                if (!selectedFiles.some(existingFile => existingFile.name === file.name)) {
+                     selectedFiles.push(file);
+                     displayFileEntry(file); // Create and display the file entry UI
+                } else {
+                    console.warn(`Skipping duplicate file: ${file.name}`);
+                }
             });
-            updateDownloadButtonText(); // Update button text with file count
+            updateButtonStates(); // Update button states based on file count
         }
 
         // Function to display a single file entry in the UI
@@ -133,16 +163,20 @@
             const fileSizeKB = (file.size / 1024).toFixed(2);
 
             fileEntry.innerHTML = `
-                <div class="flex-grow mr-4">
-                    <p class="file-name font-semibold text-gray-800">${file.name}</p>
-                    <p class="status text-sm text-gray-600">Waiting...</p>
-                    <p class="size-info text-xs text-gray-500">Original: ${fileSizeKB} KB</p>
+                <div class="flex items-center flex-grow mr-4">
+                     <i class="fas fa-file-image file-icon"></i>
+                    <div class="flex-grow">
+                        <p class="file-name font-semibold text-gray-800">${file.name}</p>
+                        <p class="status text-sm text-gray-600">Waiting...</p>
+                        <p class="size-info text-xs text-gray-500">Original: ${fileSizeKB} KB</p>
+                    </div>
                 </div>
                 <div class="flex-shrink-0 flex items-center">
+                    <button class="download-individual-btn text-blue-600 hover:text-blue-800 mr-2 hidden" title="Download this image">
+                         <i class="fas fa-download"></i>
+                    </button>
                     <button class="remove-file-btn text-red-600 hover:text-red-800 focus:outline-none" title="Remove this image">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             `;
@@ -152,17 +186,15 @@
                 removeFileEntry(file.name);
             });
 
-            fileList.appendChild(fileEntry);
+            // Add event listener for the individual download button (currently non-functional)
+             const downloadIndividualBtn = fileEntry.querySelector(".download-individual-btn");
+             downloadIndividualBtn.addEventListener("click", () => {
+                 alert(`Individual download for ${file.name} is not yet implemented.`);
+                 // This is where you would add logic to request and download the individual file from the backend
+             });
 
-            // Optional: Display a small preview image (can be resource intensive for many files)
-            // const reader = new FileReader();
-            // reader.onload = (e) => {
-            //     const img = document.createElement("img");
-            //     img.src = e.target.result;
-            //     img.className = "h-10 w-10 object-cover rounded mr-2";
-            //     fileEntry.insertBefore(img, fileEntry.firstChild);
-            // };
-            // reader.readAsDataURL(file);
+
+            fileList.appendChild(fileEntry);
         }
 
         // Function to remove a file entry from the list
@@ -174,14 +206,24 @@
             if (fileEntryElement) {
                 fileList.removeChild(fileEntryElement);
             }
-            updateDownloadButtonText(); // Update button text with file count
+            updateButtonStates(); // Update button states based on file count
         }
 
-        // Function to update the text on the "Compress & Download All" button
-        function updateDownloadButtonText() {
+        // Function to update the state and text of the buttons
+        function updateButtonStates() {
             const count = selectedFiles.length;
-            downloadAllBtn.textContent = `Compress & Download All (${count} image${count === 1 ? '' : 's'})`;
-            downloadAllBtn.disabled = count === 0; // Disable button if no files
+            processBtn.textContent = `Process Images (${count} image${count === 1 ? '' : 's'})`;
+            processBtn.disabled = count === 0; // Disable process button if no files
+
+            // Show/hide Clear All button
+            if (count > 0) {
+                clearAllBtn.classList.remove('hidden');
+            } else {
+                clearAllBtn.classList.add('hidden');
+            }
+
+            // Hide download all button by default, show only after successful processing
+            downloadAllBtn.classList.add('hidden');
         }
 
         // Function to update the status of a specific file entry in the UI
@@ -190,42 +232,59 @@
             if (fileEntryElement) {
                 const statusElement = fileEntryElement.querySelector(".status");
                 statusElement.textContent = statusText;
+                // Show/hide individual download button based on status
+                 const downloadIndividualBtn = fileEntryElement.querySelector(".download-individual-btn");
+
                 if (isError) {
                     statusElement.classList.add("text-red-600");
-                    statusElement.classList.remove("text-gray-600");
-                } else {
-                     statusElement.classList.remove("text-red-600");
+                    statusElement.classList.remove("text-gray-600", "text-green-600");
+                    downloadIndividualBtn.classList.add('hidden'); // Hide download button on error
+                } else if (statusText === "Complete") {
+                     statusElement.classList.add("text-green-600");
+                     statusElement.classList.remove("text-gray-600", "text-red-600");
+                     downloadIndividualBtn.classList.remove('hidden'); // Show download button on complete
+                }
+                else {
+                     statusElement.classList.remove("text-red-600", "text-green-600");
                      statusElement.classList.add("text-gray-600");
+                     downloadIndividualBtn.classList.add('hidden'); // Hide download button otherwise
                 }
             }
         }
 
-         // Function to update the size info of a specific file entry in the UI (for reduced size)
-         // Note: This requires backend support to provide the reduced size.
-         function updateFileSizeInfo(fileName, originalSizeKB, reducedSizeKB) {
+        // Function to update the size info of a specific file entry in the UI (for reduced size)
+        function updateFileSizeInfo(fileName, originalSize, compressedSize, status) {
             const fileEntryElement = fileList.querySelector(`[data-file-name="${fileName}"]`);
             if (fileEntryElement) {
                 const sizeInfoElement = fileEntryElement.querySelector(".size-info");
-                const percentage = reducedSizeKB < originalSizeKB ? (((originalSizeKB - reducedSizeKB) / originalSizeKB) * 100).toFixed(0) : 0;
-                 sizeInfoElement.textContent = `Original: ${originalSizeKB} KB, Reduced: ${reducedSizeKB} KB (${percentage}% smaller)`;
+                const originalSizeKB = (originalSize / 1024).toFixed(2);
+
+                if (status === "Complete") {
+                    const compressedSizeKB = (compressedSize / 1024).toFixed(2);
+                    const reduction = originalSize > 0 ? (((originalSize - compressedSize) / originalSize) * 100).toFixed(0) : 0;
+                    sizeInfoElement.textContent = `${originalSizeKB} KB → ${compressedSizeKB} KB (${reduction}% smaller)`;
+                } else {
+                     sizeInfoElement.textContent = `Original: ${originalSizeKB} KB`;
+                }
             }
          }
 
 
-        // Async function to handle image compression and download
-        async function compressImages() {
+        // Async function to handle image processing and display results
+        async function processAndDisplayResults() {
             const files = selectedFiles; // Use the selectedFiles array
             const format = document.getElementById("format").value.split("/")[1];
             const quality = qualityInput.value;
 
             if (files.length === 0) {
-                alert("Please select images to compress.");
+                alert("Please select images to process.");
                 return;
             }
 
             // Update status to Processing for all files
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
-            downloadAllBtn.disabled = true; // Disable button during processing
+            processBtn.disabled = true; // Disable process button during processing
+            downloadAllBtn.classList.add('hidden'); // Hide download all button
 
             const formData = new FormData();
             files.forEach(file => formData.append("images", file));
@@ -237,41 +296,51 @@
                 });
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    alert(`Compression failed: ${response.status} ${response.statusText}. ${errorText || ''}`);
+                    const errorData = await response.json(); // Expect JSON error from backend
+                    alert(`Processing failed: ${response.status} ${response.statusText}. ${errorData.error || ''}`);
                      files.forEach(file => updateFileStatus(file.name, "Error", true)); // Set status to Error
                 } else {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `compressed_images.${format === 'jpeg' ? 'zip' : format}`; // Consider getting filename from backend headers
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    window.URL.revokeObjectURL(url);
+                    const results = await response.json(); // Expect JSON array of results
 
-                    // Update status to Complete for all files after successful download trigger
-                    files.forEach(file => updateFileStatus(file.name, "Complete"));
+                    // Update UI with results for each file
+                    let allComplete = true;
+                    results.forEach(result => {
+                        updateFileStatus(result.name, result.status, result.status !== "Complete");
+                        updateFileSizeInfo(result.name, result.originalSize, result.compressedSize, result.status);
+                        if (result.status !== "Complete") {
+                            allComplete = false; // If any file failed, don't show download button
+                        }
+                    });
 
-                    // NOTE: Displaying reduced size and individual download links here
-                    // requires the backend to return this information along with the zip,
-                    // or a different backend approach entirely.
-                    // The current backend only returns the zip file.
+                    // If all files processed successfully, show the Download All button
+                    if (allComplete && results.length > 0) {
+                         downloadAllBtn.classList.remove('hidden');
+                         // NOTE: Clicking this button will need to trigger a NEW backend request
+                         // to generate and download the zip of the successfully processed files.
+                         // This functionality is NOT yet implemented in the backend or this frontend code.
+                         downloadAllBtn.onclick = () => {
+                             alert("Download All functionality is not yet fully implemented in this version.");
+                             // You would typically make another fetch request here to a new backend endpoint
+                             // that creates and sends the zip file of the processed images.
+                             // This endpoint would need access to the processed image data (e.g., stored temporarily on the server).
+                         };
+                    } else if (results.length === 0) {
+                         alert("No files were processed successfully.");
+                    }
                 }
 
             } catch (error) {
-                alert(`An error occurred during compression: ${error.message}`);
+                alert(`An error occurred during processing: ${error.message}`);
                 console.error("Fetch error:", error);
                  files.forEach(file => updateFileStatus(file.name, "Error", true)); // Set status to Error
             } finally {
-                 downloadAllBtn.disabled = false; // Re-enable button after processing (even on error)
-                 updateDownloadButtonText(); // Ensure button text is correct
+                 processBtn.disabled = false; // Re-enable process button
+                 updateButtonStates(); // Ensure button states are correct (hides download if needed)
             }
         }
 
-        // Initialize button text on page load
-        updateDownloadButtonText();
+        // Initialize button states on page load
+        updateButtonStates();
 
     </script>
 </body>
