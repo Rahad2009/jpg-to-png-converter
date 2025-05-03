@@ -1,81 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Universal Image Converter</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 text-gray-800 font-sans">
-  <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
-    <h1 class="text-2xl font-bold mb-4 text-center">Universal Image Converter</h1>
+import express from "express";
+import fs from "fs";
+import path from "path";
+import multer from "multer";
+import sharp from "sharp";
+import archiver from "archiver";
+import { fileURLToPath } from "url";
 
-    <div class="mb-4">
-      <label class="block mb-1 font-semibold">Select Output Format:</label>
-      <select id="format" class="w-full p-2 border rounded">
-        <option value="image/jpeg">JPEG</option>
-        <option value="image/png">PNG</option>
-        <option value="image/webp">WebP</option>
-      </select>
-    </div>
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-    <div class="mb-4">
-      <label class="block mb-1 font-semibold">Quality (10–100):</label>
-      <input type="number" id="quality" value="75" min="10" max="100" class="w-full p-2 border rounded"/>
-    </div>
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-    <div class="mb-4">
-      <label class="block mb-1 font-semibold">Select Images:</label>
-      <input type="file" id="fileInput" accept="image/*" multiple class="w-full p-2 border rounded"/>
-    </div>
+// Middleware to serve static files
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-    <button onclick="compressImages()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full">
-      Compress & Download
-    </button>
+// Set up Multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, "uploads");
+    if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
 
-    <div id="loading" class="text-center mt-4 hidden">
-      <span class="text-blue-500 font-medium">Processing images...</span>
-    </div>
-  </div>
+const upload = multer({ storage });
 
-  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.0/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+// Serve the HTML file
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
 
-  <script>
-    async function compressImages() {
-      const input = document.getElementById("fileInput");
-      const format = document.getElementById("format").value;
-      const quality = parseInt(document.getElementById("quality").value) / 100;
-      const files = input.files;
-      const loading = document.getElementById("loading");
+// Handle image conversion
+app.post("/convert", upload.array("images"), async (req, res) => {
+  const format = req.body.format;
+  const quality = parseInt(req.body.quality) || 75;
+  const convertedDir = path.join(__dirname, "converted");
 
-      if (files.length === 0) return alert("Please select images.");
+  if (!fs.existsSync(convertedDir)) fs.mkdirSync(convertedDir);
 
-      loading.classList.remove("hidden");
+  const outputFiles = [];
 
-      const zip = new JSZip();
+  try {
+    for (let file of req.files) {
+      const outputFilename = `${path.parse(file.originalname).name}.${format}`;
+      const outputPath = path.join(convertedDir, outputFilename);
 
-      for (const file of files) {
-        const compressedBlob = await imageCompression(file, {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1920,
-          initialQuality: quality,
-          fileType: format,
-        });
+      await sharp(file.path)
+        .toFormat(format, { quality })
+        .toFile(outputPath);
 
-        const convertedFile = new File([compressedBlob], `${file.name.split('.')[0]}.${format.split('/')[1]}`, {
-          type: format,
-        });
-
-        zip.file(convertedFile.name, convertedFile);
-      }
-
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      saveAs(zipBlob, "compressed_images.zip");
-
-      loading.classList.add("hidden");
+      outputFiles.push({ filename: outputFilename, path: `/converted/${outputFilename}` });
     }
-  </script>
-</body>
-</html>
+
+    res.json({ success: true, files: outputFiles });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Download all as ZIP
+app.get("/download-all.zip", (req, res) => {
+  const zipPath = path.join(__dirname, "converted.zip");
+  const output = fs.createWriteStream(zipPath);
+  const archive = archiver("zip", { zlib: { level: 9 } });
+
+  output.on("close", () => {
+    res.download(zipPath);
+  });
+
+  archive.pipe(output);
+  archive.directory(path.join(__dirname, "converted"), false);
+  archive.finalize();
+});
+
+// Serve converted images
+app.use("/converted", express.static(path.join(__dirname, "converted")));
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+});
