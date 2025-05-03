@@ -132,11 +132,12 @@
               background-color: #e5e7eb; /* gray-200 */
               border-radius: 0.25rem; /* rounded-md */
               overflow: hidden; /* Hide overflow */
+              position: relative; /* Needed for centering text */
           }
 
           /* Style for the progress bar fill */
           .progress-bar {
-              height: 1rem; /* Adjust height as needed */
+              height: 1.5rem; /* Increased height for better visibility */
               background-color: #3b82f6; /* blue-500 */
               width: 0%; /* Initial width */
               transition: width 0.3s ease-in-out; /* Smooth transition */
@@ -144,8 +145,23 @@
               align-items: center;
               justify-content: center;
               color: white;
-              font-size: 0.75rem; /* text-xs */
+              font-size: 0.875rem; /* text-sm */
               font-weight: bold;
+              text-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Add text shadow for readability */
+          }
+
+          /* Style for the progress bar text */
+          .progress-text-overlay {
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #4b5563; /* gray-600 */
+              font-size: 0.875rem; /* text-sm */
+              font-weight: bold;
+              z-index: 1; /* Ensure text is above the bar */
           }
     </style>
 </head>
@@ -171,9 +187,9 @@
         </div>
 
         <div id="progressBarContainer" class="mb-6 hidden">
-            <p class="text-sm text-gray-700 mb-1"><span id="progressText">Processing...</span></p>
-            <div class="progress-container">
-                <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            <p class="text-sm text-gray-700 mb-1"><span id="progressStatusText">Processing...</span></p> <div class="progress-container">
+                <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <span id="progressBarText" class="progress-text-overlay">0%</span> </div>
             </div>
         </div>
 
@@ -221,10 +237,13 @@
         const clearAllBtn = document.getElementById("clearAllBtn"); // Clear All button
         const progressBarContainer = document.getElementById("progressBarContainer"); // Progress bar container
         const progressBar = document.getElementById("progressBar"); // Progress bar fill
-        const progressText = document.getElementById("progressText"); // Text above progress bar
+        const progressBarText = document.getElementById("progressBarText"); // Text inside the progress bar
+        const progressStatusText = document.getElementById("progressStatusText"); // Text above progress bar
 
 
         let selectedFiles = []; // Array to hold the files to be processed
+        let processedCount = 0; // Counter for processed files
+
 
         // Event listener for the quality slider to update the displayed value
         qualityInput.addEventListener("input", () => {
@@ -269,7 +288,12 @@
              // Also hide the progress bar when clearing
              progressBarContainer.classList.add('hidden');
              progressBar.style.width = '0%';
-             progressText.textContent = 'Processing...';
+             progressBarText.textContent = '0%'; // Reset text inside bar
+             progressStatusText.textContent = 'Processing...'; // Reset status text
+             processedCount = 0; // Reset processed count
+             // Reset progress bar color
+             progressBar.classList.remove('bg-red-500', 'bg-yellow-500');
+             progressBar.classList.add('bg-blue-500');
         });
 
 
@@ -469,7 +493,7 @@
                     sizeInfoElement.textContent = `${originalSizeKB} KB → ${compressedSizeKB} KB (${reduction}% smaller)`;
                      // Adjusted format to match screenshot more closely
                 } else {
-                     sizeInfoElement.textContent = `Original: ${originalSizeKB} KB <span class="estimated-size hidden">(Estimated: N/A)</span>`;
+                     sizeInfoElement.innerHTML = `Original: ${originalSizeKB} KB <span class="estimated-size hidden">(Estimated: N/A)</span>`;
                      // Keep the placeholder if not complete
                 }
             }
@@ -491,14 +515,21 @@
             // Show and reset progress bar
             progressBarContainer.classList.remove('hidden');
             progressBar.style.width = '0%';
-            progressText.textContent = `Processing 0/${files.length} files...`;
+            progressBarText.textContent = '0%'; // Reset text inside bar
+            progressStatusText.textContent = `Processing 0/${files.length} files...`;
             progressBar.setAttribute('aria-valuenow', '0');
+             // Reset progress bar color
+             progressBar.classList.remove('bg-red-500', 'bg-yellow-500');
+             progressBar.classList.add('bg-blue-500');
 
 
             // Update status to Processing for all files
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
             downloadAllBtn.classList.add('hidden'); // Hide download all button at the start of processing
              console.log("Download All button hidden at start of processing."); // Log when hidden
+
+            // Reset processed count at the start of a new batch
+            processedCount = 0;
 
 
             const formData = new FormData();
@@ -526,11 +557,13 @@
                     }
                     alert(errorDetails);
                     // Update progress bar to indicate failure
-                    progressBar.style.width = '100%';
-                    progressBar.classList.remove('bg-blue-500');
+                    const completionPercentage = files.length > 0 ? (processedCount / files.length) * 100 : 100;
+                    progressBar.style.width = `${completionPercentage}%`;
+                    progressBarText.textContent = `${completionPercentage.toFixed(0)}%`;
+                    progressBar.classList.remove('bg-blue-500', 'bg-yellow-500');
                     progressBar.classList.add('bg-red-500');
-                    progressText.textContent = `Processing Failed`;
-                    progressBar.setAttribute('aria-valuenow', '100');
+                    progressStatusText.textContent = `Processing Failed`;
+                    progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
 
 
                 } else {
@@ -549,16 +582,17 @@
                         } else {
                             successfullyProcessedCount++;
                         }
+                        // Increment processed count for each result received
+                        processedCount++;
+                         // Update progress bar after each result is processed on the frontend
+                        const completionPercentage = files.length > 0 ? (processedCount / files.length) * 100 : 100;
+                        progressBar.style.width = `${completionPercentage}%`;
+                        progressBarText.textContent = `${completionPercentage.toFixed(0)}%`;
+                        progressStatusText.textContent = `Processed ${processedCount}/${files.length} files...`;
+                        progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
                     });
 
-                    // Update progress bar based on completed files
-                    const completionPercentage = files.length > 0 ? (successfullyProcessedCount / files.length) * 100 : 100;
-                    progressBar.style.width = `${completionPercentage}%`;
-                    progressText.textContent = `Processed ${successfullyProcessedCount}/${files.length} files`;
-                     progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
-
-
-                    // If all files processed successfully AND there are files, show the Download All button
+                    // After processing all results:
                     if (allComplete && results.length > 0) {
                          downloadAllBtn.classList.remove('hidden');
                          console.log("Download All button shown: All files complete."); // Log when shown
@@ -571,7 +605,7 @@
                               // Trigger download by navigating to the new backend download-all-zip route
                               window.open('/download-all-zip', '_blank');
                          };
-                         // Hide progress bar on success
+                         // Hide progress bar on complete success
                          progressBarContainer.classList.add('hidden');
 
 
@@ -588,7 +622,7 @@
                          if (files.length > 0) {
                               progressBar.classList.remove('bg-blue-500');
                               progressBar.classList.add('bg-yellow-500'); // Indicate partial success/failure
-                              progressText.textContent = `Processed ${successfullyProcessedCount}/${files.length} files (with errors)`;
+                              progressStatusText.textContent = `Processed ${successfullyProcessedCount}/${files.length} files (with errors)`;
                          } else {
                              // Should not happen if files.length === 0 check at start works
                              progressBarContainer.classList.add('hidden');
@@ -603,11 +637,13 @@
                  // Set status to Error for all files if a general fetch error occurs
                  files.forEach(file => updateFileStatus(file.name, "Error", true, error.message));
                  // Update progress bar to indicate failure
-                 progressBar.style.width = '100%';
+                 const completionPercentage = files.length > 0 ? (processedCount / files.length) * 100 : 100;
+                 progressBar.style.width = `${completionPercentage}%`;
+                 progressBarText.textContent = `${completionPercentage.toFixed(0)}%`;
                  progressBar.classList.remove('bg-blue-500', 'bg-yellow-500');
                  progressBar.classList.add('bg-red-500');
-                 progressText.textContent = `Processing Failed`;
-                 progressBar.setAttribute('aria-valuenow', '100');
+                 progressStatusText.textContent = `Processing Failed`;
+                 progressBar.setAttribute('aria-valuenow', completionPercentage.toFixed(0));
             } finally {
                  // The clearAllBtn visibility is handled correctly within updateButtonStates
                  // when files are added or removed.
