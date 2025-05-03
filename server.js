@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import sharp from "sharp";
+import archiver from "archiver"; // Import archiver for zip creation
 import { fileURLToPath } from "url";
-// No longer need archiver for the /compress route, but might need it for a separate /download-zip route later
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +30,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Compression route: Handles POST requests to /compress
-// This route will now process images in parallel and return JSON results.
+// This route processes images in parallel and returns JSON results.
 app.post("/compress", upload.array("images"), async (req, res) => {
   // Clear previous processed images data
   // NOTE: This simple clearing means only the last batch of processed images is available for download.
@@ -118,10 +118,10 @@ app.post("/compress", upload.array("images"), async (req, res) => {
 
   // NOTE: The processedImages object now holds the buffers of the successfully
   // converted images. The /download/:filename route uses this storage.
-  // The "Download All" zip functionality still needs to be implemented separately.
+  // The "Download All" zip functionality is implemented in the new /download-all-zip route below.
 });
 
-// New route to download individual processed images
+// Route to download individual processed images
 app.get("/download/:filename", (req, res) => {
     const filename = req.params.filename;
     const imageBuffer = processedImages[filename];
@@ -144,6 +144,43 @@ app.get("/download/:filename", (req, res) => {
         console.warn(`File not found for download: ${filename}`);
         res.status(404).send("File not found.");
     }
+});
+
+// New route to download all processed images as a zip file
+app.get("/download-all-zip", (req, res) => {
+    const archive = archiver('zip', {
+        zlib: { level: 6 } // Compression level
+    });
+
+    // Set response headers for a zip file download
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="compressed_images.zip"');
+
+    // Pipe the archive output to the response
+    archive.pipe(res);
+
+    // Add files from the processedImages temporary storage to the archive
+    const filenames = Object.keys(processedImages);
+    if (filenames.length === 0) {
+        console.warn("No processed images available for zipping.");
+        // Send an empty zip or an error, depending on desired behavior
+        archive.finalize(); // Finalize an empty archive
+        return; // Exit the function
+    }
+
+    filenames.forEach(filename => {
+        const buffer = processedImages[filename];
+        archive.append(buffer, { name: filename });
+        console.log(`Adding ${filename} to zip archive.`);
+    });
+
+    // Finalize the archive
+    archive.finalize();
+    console.log("Zip archive finalized and sent.");
+
+    // NOTE: In a production app, you might want to clear processedImages
+    // after the zip is successfully sent, or use a more robust temporary storage
+    // that handles cleanup.
 });
 
 
