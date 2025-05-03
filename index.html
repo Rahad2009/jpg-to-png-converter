@@ -3,8 +3,31 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Universal Image Converter</title>
+
+    <title>Universal Image Converter | Compress & Convert Images Online</title>
+
+    <meta name="description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
+
+    <meta name="keywords" content="image converter, compress image, reduce image size, online image converter, free image compressor, batch image converter, convert image to jpeg, convert image to png, convert image to webp, convert image to avif, convert image to jxl, image optimization">
+
+    <link rel="canonical" href="https://yourwebsite.com/">
+
     <link rel="icon" href="/logo.png" type="image/png">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourwebsite.com/">
+    <meta property="og:title" content="Universal Image Converter | Compress & Convert Images Online">
+    <meta property="og:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
+    <meta property="og:image" content="https://yourwebsite.com/social-share-image.jpg">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourwebsite.com/">
+    <meta property="twitter:title" content="Universal Image Converter | Compress & Convert Images Online">
+    <meta property="twitter:description" content="Easily compress and convert images online with our free Universal Image Converter. Supports batch processing for JPEG, PNG, WebP, AVIF, JXL, and more. Reduce image size while maintaining quality.">
+    <meta property="twitter:image" content="https://yourwebsite.com/social-share-image.jpg">
+
+    <meta name="theme-color" content="#3b82f6">
+
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -61,7 +84,7 @@
 <body class="bg-gray-100 text-gray-900 font-sans">
     <div class="max-w-3xl mx-auto py-10 px-4">
         <div class="text-center mb-6">
-             <img src="/logo.png" alt="Logo" class="h-16 mx-auto mb-2 rounded">
+             <img src="/logo.png" alt="Universal Image Converter Logo" class="h-16 mx-auto mb-2 rounded">
             <h1 class="text-3xl font-bold">Universal Image Converter</h1>
         </div>
 
@@ -100,6 +123,32 @@
         <button id="clearAllBtn" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md w-full mt-2 transition-colors duration-150 hidden">
              <i class="fas fa-trash-alt mr-2"></i> Clear All
         </button>
+
+        <div class="mt-10 p-6 bg-white rounded-md shadow-md text-gray-700">
+            <p class="mb-4">Welcome to the <strong>Universal Image Converter</strong>, your free online tool for <strong>batch image compression</strong> and <strong>format conversion</strong>. Easily <strong>reduce image size</strong> for faster website loading, email attachments, or storage savings.</p>
+            <p class="mb-4">Our converter supports popular formats including <strong>JPEG, PNG, WebP, AVIF, and JXL</strong>. Simply drag and drop your images or click to upload, select your desired output format and quality, and let our tool do the rest. Get high-quality compressed images quickly and efficiently.</p>
+
+            <h2 class="text-2xl font-semibold mb-3 mt-6 border-b pb-2 border-gray-200">Key Features:</h2>
+            <ul class="list-disc list-inside mb-4">
+                <li><strong>Batch Processing:</strong> Convert multiple images at once.</li>
+                <li><strong>Multiple Format Support:</strong> Convert to JPEG, PNG, WebP, AVIF, JXL.</li>
+                <li><strong>Adjustable Quality:</strong> Control the level of compression for lossy formats.</li>
+                <li><strong>Fast and Efficient:</strong> Powered by a robust backend for quick conversions.</li>
+                <li><strong>Free to Use:</strong> Optimize your images without any cost.</li>
+                <li><strong>Browser-Based:</strong> No software installation required.</li>
+            </ul>
+
+             <h2 class="text-2xl font-semibold mb-3 mt-6 border-b pb-2 border-gray-200">How to Use:</h2>
+             <ol class="list-decimal list-inside mb-4">
+                 <li>Drag and drop your images into the dropzone or click to select files.</li>
+                 <li>Choose your desired output format (JPEG, PNG, WebP, AVIF, JXL).</li>
+                 <li>Adjust the quality slider for lossy formats (JPEG, WebP, AVIF, JXL).</li>
+                 <li>Images will be processed automatically.</li>
+                 <li>Download individual compressed images or use the "Download All" button for a zip file (zip download feature coming soon!).</li>
+             </ol>
+        </div>
+
+
     </div>
 
     <script>
@@ -210,6 +259,7 @@
             // Initial click handler for the individual download button (shows alert)
              const downloadIndividualBtn = fileEntry.querySelector(".download-individual-btn");
              downloadIndividualBtn.onclick = () => {
+                 console.log(`Attempted download for ${file.name} before ready.`);
                  alert(`Download link for ${file.name} is not yet ready.`);
              };
 
@@ -264,6 +314,11 @@
                     statusElement.classList.add("text-red-600");
                     statusElement.classList.remove("text-gray-600", "text-green-600");
                     downloadIndividualBtn.classList.add('hidden'); // Hide download button on error
+                     // Reset click handler on error
+                     downloadIndividualBtn.onclick = () => {
+                         console.log(`Attempted download for ${fileName} on error status.`);
+                         alert(`Download link for ${fileName} is not available due to processing error.`);
+                     };
                 } else if (statusText === "Complete") {
                      statusElement.classList.add("text-green-600");
                      statusElement.classList.remove("text-gray-600", "text-red-600");
@@ -277,8 +332,10 @@
                      const originalFileEntry = selectedFiles.find(file => file.name === fileName);
                      const outputFilename = originalFileEntry ? `${path.parse(originalFileEntry.name).name}.${format}` : `${path.parse(fileName).name}.${format}`;
 
+                     console.log(`Setting download handler for ${fileName}. Output filename: ${outputFilename}`); // Log when handler is set
 
                      downloadIndividualBtn.onclick = () => {
+                         console.log(`Triggering download for ${outputFilename}`); // Log when download is triggered
                          // Trigger download by navigating to the new backend download route
                          window.open(`/download/${outputFilename}`, '_blank');
                      };
@@ -290,6 +347,7 @@
                      downloadIndividualBtn.classList.add('hidden'); // Hide download button otherwise
                      // Reset click handler for non-complete states
                      downloadIndividualBtn.onclick = () => {
+                         console.log(`Attempted download for ${fileName} before complete status.`);
                          alert(`Download link for ${fileName} is not yet ready.`);
                      };
                 }
