@@ -255,7 +255,6 @@
                 removeFileEntry(file.name);
             });
 
-            // *** Changed from addEventListener to onclick = ***
             // Initial click handler for the individual download button (shows alert)
              const downloadIndividualBtn = fileEntry.querySelector(".download-individual-btn");
              downloadIndividualBtn.onclick = () => {
@@ -425,12 +424,13 @@
                          // Update Download All button text with count
                          downloadAllBtn.textContent = `Download All (${successfullyProcessedCount} image${successfullyProcessedCount === 1 ? '' : 's'})`;
 
-                         // NOTE: The click handler for downloadAllBtn still needs backend implementation to generate the zip.
+                         // *** Update Download All button click handler ***
                          downloadAllBtn.onclick = () => {
-                             alert("Download All functionality is not yet fully implemented in this version.");
-                             // You would typically make another fetch request here to a new backend endpoint
-                             // that creates and sends the zip file of the processed images.
+                              console.log("Triggering Download All zip."); // Log when Download All is triggered
+                              // Trigger download by navigating to the new backend download-all-zip route
+                              window.open('/download-all-zip', '_blank');
                          };
+
                     } else if (results.length === 0) {
                          alert("No files were processed successfully.");
                     }
