@@ -144,7 +144,7 @@
       "operatingSystem": "Web",
       "applicationCategory": "https://schema.org/MultimediaApplication",
       "url": "https://jpg-to-png-converter.onrender.com/",
-      "description": "Easily compress and convert images online with our free Universal Image Converter. Reduce image size (to 2MB, 30KB, 5KB, etc.), convert formats (JPG to PNG, PNG to JPG, WebP, AVIF, JXL), and batch process images quickly. Your go-to online image optimizer and resizer. संवेदनशील",
+      "description": "Easily compress and convert images online with our free Universal Image Converter. Reduce image size (to 2MB, 30KB, 5KB, etc.), convert formats (JPG to PNG, PNG to JPG, WebP, AVIF, JXL), and batch process images quickly. Your go-to online image optimizer and resizer.",
       "offers": {
         "@type": "Offer",
         "price": "0", // Since the service is free
@@ -168,6 +168,11 @@
                 <option value="image/jxl">JXL</option>
             </select>
         </div>
+
+        <div class="mb-6 p-4 bg-white rounded-md shadow-sm"> <label for="quality" class="block mb-2 font-semibold text-gray-700">Quality:
+                <span id="qualityValue">75%</span> </label>
+            <input type="range" id="quality" min="10" max="100" value="75"
+                   class="w-full appearance-none h-2 bg-blue-300 rounded-full outline-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-150 cursor-pointer"> </div>
 
         <div id="dropzone" class="border-2 border-dashed border-blue-300 p-8 text-center rounded-lg cursor-pointer bg-white hover:bg-blue-50 transition-colors duration-200 ease-in-out mb-6 shadow-md"> <div class="text-blue-500 mb-2"><i class="fas fa-cloud-upload-alt text-4xl"></i></div> <p class="text-blue-700 font-semibold">Drop images here or click to upload to compress or convert</p> <p class="text-sm text-gray-500 mt-1">Supports JPEG, PNG, WebP, AVIF, and JXL. Convert JPG to PNG, resize images, and more.</p> <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
         </div>
