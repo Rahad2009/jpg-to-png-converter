@@ -36,6 +36,25 @@
             height: 24px; /* Adjust size as needed */
             margin-right: 12px;
             color: #6b7280; /* gray-500 */
+            flex-shrink: 0; /* Prevent icon from shrinking */
+        }
+
+         /* Style for the processing spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* blue-500 */
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -70,17 +89,13 @@
             <input type="file" id="fileInput" multiple class="hidden" accept="image/*" />
         </div>
 
-        <button id="processBtn" onclick="processAndDisplayResults()"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md w-full transition-colors duration-150 mb-4">
-            Process Images
+        <button id="downloadAllBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-full mb-4 transition-colors duration-150 hidden">
+            <i class="fas fa-download mr-2"></i> Download All Compressed Images (Zip)
         </button>
+
 
         <div id="fileList" class="mb-4">
             </div>
-
-         <button id="downloadAllBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md w-full mt-4 transition-colors duration-150 hidden">
-            <i class="fas fa-download mr-2"></i> Download All Compressed Images (Zip)
-        </button>
 
         <button id="clearAllBtn" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md w-full mt-2 transition-colors duration-150 hidden">
              <i class="fas fa-trash-alt mr-2"></i> Clear All
@@ -94,8 +109,8 @@
         const fileList = document.getElementById("fileList"); // Container for file entries
         const qualityInput = document.getElementById("quality");
         const qualityValue = document.getElementById("qualityValue");
-        const processBtn = document.getElementById("processBtn");
-        const downloadAllBtn = document.getElementById("downloadAllBtn");
+        // Removed processBtn reference
+        const downloadAllBtn = document.getElementById("downloadAllBtn"); // Moved to top
         const clearAllBtn = document.getElementById("clearAllBtn"); // Clear All button
 
         let selectedFiles = []; // Array to hold the files to be processed
@@ -152,6 +167,11 @@
                 }
             });
             updateButtonStates(); // Update button states based on file count
+
+            // *** Automatically trigger processing after adding files ***
+            if (selectedFiles.length > 0) {
+                 processAndDisplayResults();
+            }
         }
 
         // Function to display a single file entry in the UI
@@ -186,11 +206,10 @@
                 removeFileEntry(file.name);
             });
 
-            // Add event listener for the individual download button (currently non-functional)
+            // Add event listener for the individual download button (will be updated after processing)
              const downloadIndividualBtn = fileEntry.querySelector(".download-individual-btn");
              downloadIndividualBtn.addEventListener("click", () => {
-                 alert(`Individual download for ${file.name} is not yet implemented.`);
-                 // This is where you would add logic to request and download the individual file from the backend
+                 alert(`Download link for ${file.name} is not yet ready.`);
              });
 
 
@@ -212,11 +231,10 @@
         // Function to update the state and text of the buttons
         function updateButtonStates() {
             const count = selectedFiles.length;
-            processBtn.textContent = `Process Images (${count} image${count === 1 ? '' : 's'})`;
-            processBtn.disabled = count === 0; // Disable process button if no files
+            // Removed processBtn text update and disabled state logic
 
             // Show/hide Clear All button
-            if (count > 0) {
+            if (count > 0 || fileList.children.length > 0) { // Show if files selected or results are displayed
                 clearAllBtn.classList.remove('hidden');
             } else {
                 clearAllBtn.classList.add('hidden');
@@ -231,7 +249,13 @@
             const fileEntryElement = fileList.querySelector(`[data-file-name="${fileName}"]`);
             if (fileEntryElement) {
                 const statusElement = fileEntryElement.querySelector(".status");
-                statusElement.textContent = statusText;
+                // Add spinner for processing status
+                if (statusText === "Processing...") {
+                    statusElement.innerHTML = `<span class="spinner"></span> ${statusText}`;
+                } else {
+                    statusElement.innerHTML = statusText; // Clear spinner
+                }
+
                 // Show/hide individual download button based on status
                  const downloadIndividualBtn = fileEntryElement.querySelector(".download-individual-btn");
 
@@ -243,11 +267,30 @@
                      statusElement.classList.add("text-green-600");
                      statusElement.classList.remove("text-gray-600", "text-red-600");
                      downloadIndividualBtn.classList.remove('hidden'); // Show download button on complete
+
+                     // *** Update individual download button click handler ***
+                     const format = document.getElementById("format").value.split("/")[1];
+                     // Need to get the *processed* filename from the backend result, not reconstruct it.
+                     // Assuming the backend result includes the final filename.
+                     // For now, reconstructing based on original name and selected format.
+                     const originalFileEntry = selectedFiles.find(file => file.name === fileName);
+                     const outputFilename = originalFileEntry ? `${path.parse(originalFileEntry.name).name}.${format}` : `${path.parse(fileName).name}.${format}`;
+
+
+                     downloadIndividualBtn.onclick = () => {
+                         // Trigger download by navigating to the new backend download route
+                         window.open(`/download/${outputFilename}`, '_blank');
+                     };
+
                 }
                 else {
                      statusElement.classList.remove("text-red-600", "text-green-600");
                      statusElement.classList.add("text-gray-600");
                      downloadIndividualBtn.classList.add('hidden'); // Hide download button otherwise
+                     // Reset click handler for non-complete states
+                     downloadIndividualBtn.onclick = () => {
+                         alert(`Download link for ${fileName} is not yet ready.`);
+                     };
                 }
             }
         }
@@ -263,6 +306,7 @@
                     const compressedSizeKB = (compressedSize / 1024).toFixed(2);
                     const reduction = originalSize > 0 ? (((originalSize - compressedSize) / originalSize) * 100).toFixed(0) : 0;
                     sizeInfoElement.textContent = `${originalSizeKB} KB → ${compressedSizeKB} KB (${reduction}% smaller)`;
+                     // Adjusted format to match screenshot more closely
                 } else {
                      sizeInfoElement.textContent = `Original: ${originalSizeKB} KB`;
                 }
@@ -277,13 +321,14 @@
             const quality = qualityInput.value;
 
             if (files.length === 0) {
-                alert("Please select images to process.");
+                // This case should be less likely now that processing is automatic,
+                // but good to keep as a safeguard.
                 return;
             }
 
             // Update status to Processing for all files
             files.forEach(file => updateFileStatus(file.name, "Processing..."));
-            processBtn.disabled = true; // Disable process button during processing
+            // processBtn is removed, no need to disable it.
             downloadAllBtn.classList.add('hidden'); // Hide download all button
 
             const formData = new FormData();
@@ -304,25 +349,28 @@
 
                     // Update UI with results for each file
                     let allComplete = true;
+                    let successfullyProcessedCount = 0;
                     results.forEach(result => {
                         updateFileStatus(result.name, result.status, result.status !== "Complete");
                         updateFileSizeInfo(result.name, result.originalSize, result.compressedSize, result.status);
                         if (result.status !== "Complete") {
                             allComplete = false; // If any file failed, don't show download button
+                        } else {
+                            successfullyProcessedCount++;
                         }
                     });
 
                     // If all files processed successfully, show the Download All button
                     if (allComplete && results.length > 0) {
                          downloadAllBtn.classList.remove('hidden');
-                         // NOTE: Clicking this button will need to trigger a NEW backend request
-                         // to generate and download the zip of the successfully processed files.
-                         // This functionality is NOT yet implemented in the backend or this frontend code.
+                         // Update Download All button text with count
+                         downloadAllBtn.textContent = `Download All (${successfullyProcessedCount} image${successfullyProcessedCount === 1 ? '' : 's'})`;
+
+                         // NOTE: The click handler for downloadAllBtn still needs backend implementation to generate the zip.
                          downloadAllBtn.onclick = () => {
                              alert("Download All functionality is not yet fully implemented in this version.");
                              // You would typically make another fetch request here to a new backend endpoint
                              // that creates and sends the zip file of the processed images.
-                             // This endpoint would need access to the processed image data (e.g., stored temporarily on the server).
                          };
                     } else if (results.length === 0) {
                          alert("No files were processed successfully.");
@@ -334,13 +382,33 @@
                 console.error("Fetch error:", error);
                  files.forEach(file => updateFileStatus(file.name, "Error", true)); // Set status to Error
             } finally {
-                 processBtn.disabled = false; // Re-enable process button
+                 // processBtn is removed, no need to re-enable it.
                  updateButtonStates(); // Ensure button states are correct (hides download if needed)
             }
         }
 
         // Initialize button states on page load
         updateButtonStates();
+
+        // Helper function to parse filename and extension (used for constructing download URL)
+        // This is a basic implementation. Node's path module is more robust.
+        const path = {
+            parse: (filePath) => {
+                const lastDot = filePath.lastIndexOf('.');
+                if (lastDot <= 0) { // Handle files with no extension or dot at the beginning
+                    return { name: filePath, ext: '' };
+                }
+                return {
+                    name: filePath.substring(0, lastDot),
+                    ext: filePath.substring(lastDot)
+                };
+            },
+            extname: (filePath) => {
+                const lastDot = filePath.lastIndexOf('.');
+                if (lastDot < 0) return '';
+                return filePath.substring(lastDot);
+            }
+        };
 
     </script>
 </body>
