@@ -156,7 +156,7 @@
 <body class="bg-gray-100 text-gray-900 font-sans">
     <div class="max-w-3xl mx-auto py-10 px-4">
         <div class="text-center mb-8">
-            <img src="/logo.png" alt="Universal Image Converter Logo - Convert and Compress Images Online" class="h-20 mx-auto mb-4 rounded"> <h1 class="text-4xl font-bold text-gray-800">Universal Image Converter & Image Compressor</h1> <p class="text-gray-600 mt-2">Compress and convert your images quickly and easily online. Convert JPG to PNG, resize images, and more.</p> </div>
+            <img src="/logo.png" alt="Universal Image Converter Logo - Convert and Compress Images Online" class="h-20 mx-auto mb-4 rounded"> <h1 class="text-4xl font-bold text-gray-800">Universal Image Converter & Image Compressor</h1> <p class="text-gray-600 mt-2"></p> </div>
 
         <div class="mb-6 p-4 bg-white rounded-md shadow-sm"> <label for="format" class="block mb-2 font-semibold text-gray-700">Select output format:</label> <select id="format" class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"> <option value="image/jpeg">JPEG</option>
                 <option value="image/png">PNG</option>
@@ -233,8 +233,7 @@
 
 
         let selectedFiles = []; // Array to hold the files to be processed
-        // Removed the draggedItem variable declaration
-        // let draggedItem = null;
+        let draggedItem = null; // To store the element being dragged
 
 
         // Event listener for the quality slider to update the displayed value
@@ -305,10 +304,10 @@
         // Function to display a single file entry in the UI
         function displayFileEntry(file) {
             const fileEntry = document.createElement("div");
-            // Removed draggable attribute
+            // Add draggable attribute and class
             fileEntry.className = "file-entry border rounded-md p-3 mb-2 bg-white flex items-center justify-between shadow-sm";
             fileEntry.dataset.fileName = file.name; // Store filename for easy lookup
-            // Removed setAttribute('draggable', true);
+            fileEntry.setAttribute('draggable', true); // Make the element draggable
 
             const fileSizeKB = (file.size / 1024).toFixed(2);
 
@@ -366,12 +365,12 @@
              };
             reader.readAsDataURL(file);
 
-            // Removed drag and drop event listeners
-            // fileEntry.addEventListener('dragstart', handleDragStart);
-            // fileEntry.addEventListener('dragover', handleDragOver);
-            // fileEntry.addEventListener('dragleave', handleDragLeave);
-            // fileEntry.addEventListener('drop', handleDrop);
-            // fileEntry.addEventListener('dragend', handleDragEnd);
+            // Add drag and drop event listeners to the file entry
+            fileEntry.addEventListener('dragstart', handleDragStart);
+            fileEntry.addEventListener('dragover', handleDragOver);
+            fileEntry.addEventListener('dragleave', handleDragLeave);
+            fileEntry.addEventListener('drop', handleDrop);
+            fileEntry.addEventListener('dragend', handleDragEnd);
         }
 
         // Function to remove a file entry from the list
@@ -472,7 +471,7 @@
                      };
                 }
             }
-         }
+        }
 
         // Function to update the size info of a specific file entry in the UI (for reduced size)
         function updateFileSizeInfo(fileName, originalSize, compressedSize, status) {
@@ -615,12 +614,65 @@
             }
         }
 
-        // Removed drag and drop reordering functions
-        // function handleDragStart(e) { ... }
-        // function handleDragOver(e) { ... }
-        // function handleDragLeave(e) { ... }
-        // function handleDrop(e) { ... }
-        // function handleDragEnd() { ... }
+        // --- Drag and Drop Reordering Logic ---
+
+        let draggedItem = null; // To store the element being dragged
+
+        function handleDragStart(e) {
+            draggedItem = e.target; // Store the element being dragged
+            e.dataTransfer.effectAllowed = 'move'; // Specify the drag effect
+            e.dataTransfer.setData('text/plain', e.target.dataset.fileName); // Pass the filename
+            setTimeout(() => {
+                draggedItem.classList.add('dragging'); // Add a class for styling (e.g., opacity)
+            }, 0); // Use a timeout to allow the drag image to be created before changing style
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault(); // Prevent default to allow drop
+            e.dataTransfer.dropEffect = 'move'; // Specify the drop effect
+
+            const targetItem = e.target.closest('.file-entry'); // Get the closest file entry element
+            if (targetItem && targetItem !== draggedItem) {
+                // Determine if dragging above or below the target item
+                const boundingBox = targetItem.getBoundingClientRect();
+                const offset = boundingBox.y + (boundingBox.height / 2);
+
+                if (e.clientY > offset) {
+                    // Dragging below the target
+                    fileList.insertBefore(draggedItem, targetItem.nextSibling);
+                } else {
+                    // Dragging above the target
+                    fileList.insertBefore(draggedItem, targetItem);
+                }
+            }
+        }
+
+        function handleDragLeave(e) {
+            // Remove any visual indicators if needed (not strictly necessary with current approach)
+        }
+
+        function handleDrop(e) {
+            e.preventDefault(); // Prevent default drop behavior
+            // The actual DOM manipulation is done in dragover, so just clean up here
+        }
+
+        function handleDragEnd() {
+            draggedItem.classList.remove('dragging'); // Remove the dragging class
+            draggedItem = null; // Clear the dragged item reference
+
+            // --- Update the selectedFiles array order to match the DOM ---
+            const fileEntries = fileList.querySelectorAll('.file-entry');
+            const newSelectedFilesOrder = [];
+            fileEntries.forEach(entry => {
+                const fileName = entry.dataset.fileName;
+                const file = selectedFiles.find(f => f.name === fileName);
+                if (file) {
+                    newSelectedFilesOrder.push(file);
+                }
+            });
+            selectedFiles = newSelectedFilesOrder;
+            console.log("Selected files order updated:", selectedFiles.map(f => f.name)); // Log the new order
+        }
 
 
         // Initialize button states on page load
