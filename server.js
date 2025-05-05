@@ -1,5 +1,6 @@
 import express from "express";
-import fs from "fs/promises"; // Use fs.promises for async file operations
+import fs from "fs"; // Import the standard fs module for streams
+import fspromises from "fs/promises"; // Import the promise-based fs for async operations
 import path from "path";
 import multer from "multer";
 import sharp from "sharp"; // Sharp is a high-performance image processing library
@@ -23,8 +24,9 @@ const tempProcessedDir = path.join(tempDir, 'processed');
 // Ensure temporary directories exist on server start
 async function createTempDirs() {
     try {
-        await fs.mkdir(tempUploadDir, { recursive: true });
-        await fs.mkdir(tempProcessedDir, { recursive: true });
+        // Use fspromises for the asynchronous mkdir operation
+        await fspromises.mkdir(tempUploadDir, { recursive: true });
+        await fspromises.mkdir(tempProcessedDir, { recursive: true });
         console.log("Temporary directories created or already exist.");
     } catch (error) {
         console.error("Error creating temporary directories:", error);
@@ -154,7 +156,8 @@ app.post("/compress", upload.array("images"), async (req, res) => {
         // --- Cleanup: Delete the original uploaded temporary file from disk ---
         // This is important to free up disk space after processing.
         try {
-            await fs.unlink(file.path);
+            // Use fspromises for the asynchronous unlink operation
+            await fspromises.unlink(file.path);
             console.log(`Deleted temporary uploaded file: ${file.path}`);
         } catch (cleanupError) {
             console.error(`Error deleting temporary uploaded file ${file.path}:`, cleanupError);
@@ -210,7 +213,7 @@ app.get("/download/:filename", async (req, res) => {
             res.setHeader('Content-Type', contentType);
             res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
-            // Stream the file from the temporary path to the response
+            // Stream the file from the temporary path to the response using the standard fs module
             const fileStream = fs.createReadStream(tempFilePath);
             fileStream.pipe(res);
 
@@ -221,7 +224,8 @@ app.get("/download/:filename", async (req, res) => {
             // strategies (e.g., delete after successful stream completion).
             fileStream.on('end', async () => {
                 try {
-                    await fs.unlink(tempFilePath);
+                    // Use fspromises for the asynchronous unlink operation
+                    await fspromises.unlink(tempFilePath);
                     console.log(`Deleted temporary processed file: ${tempFilePath}`);
                     // Also remove from processedImages after successful download
                     delete processedImages[filename];
@@ -276,7 +280,7 @@ app.get("/download-all-zip", (req, res) => {
     filenames.forEach(filename => {
         const tempFilePath = processedImages[filename];
          if (tempFilePath) {
-             // Append the file from the temporary path to the archive
+             // Append the file from the temporary path to the archive using the standard fs module
              archive.file(tempFilePath, { name: filename });
              console.log(`Adding ${filename} (from ${tempFilePath}) to zip archive.`);
          } else {
@@ -313,7 +317,8 @@ app.listen(PORT, () => {
 process.on('SIGINT', async () => {
     console.log('Server shutting down. Attempting to clean up temporary files...');
     try {
-        await fs.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
+        // Use fspromises for the asynchronous rm operation
+        await fspromises.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
         console.log('Temporary directory removed.');
     } catch (error) {
         console.error('Error during temporary directory cleanup:', error);
@@ -324,7 +329,8 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
     console.log('Server shutting down. Attempting to clean up temporary files...');
     try {
-        await fs.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
+        // Use fspromises for the asynchronous rm operation
+        await fspromises.rm(path.join(__dirname, 'temp'), { recursive: true, force: true });
         console.log('Temporary directory removed.');
     } catch (error) {
         console.error('Error during temporary directory cleanup:', error);
