@@ -412,7 +412,8 @@
         }
 
         // Function to update the status of a specific file entry in the UI
-        function updateFileStatus(fileName, statusText, isError = false, errorMessage = null) { // Added errorMessage parameter
+        // This function now accepts the full result object from the backend
+        function updateFileStatus(fileName, statusText, isError = false, errorMessage = null, result = null) {
             const fileEntryElement = fileList.querySelector(`[data-file-name="${fileName}"]`);
             if (fileEntryElement) {
                 const statusElement = fileEntryElement.querySelector(".status");
@@ -439,24 +440,19 @@
                          console.log(`Attempted download for ${fileName} on error status.`);
                          alert(`Download link for ${fileName} is not available due to processing error.`);
                      };
-                } else if (statusText === "Complete") {
+                } else if (statusText === "Complete" && result && result.outputFilename) { // Ensure result and outputFilename exist
                      statusElement.classList.add("text-green-600");
                      statusElement.classList.remove("text-gray-600", "text-red-600");
                      downloadIndividualBtn.classList.remove('hidden'); // Show download button on complete
 
-                     // *** Update individual download button click handler ***
-                     const format = document.getElementById("format").value.split("/")[1];
-                     // Need to get the *processed* filename from the backend result, not reconstruct it.
-                     // Assuming the backend result includes the final filename.
-                     // For now, reconstructing based on original name and selected format.
-                     const originalFileEntry = selectedFiles.find(file => file.name === fileName);
-                     const outputFilename = originalFileEntry ? `${path.parse(originalFileEntry.name).name}.${format}` : `${path.parse(fileName).name}.${format}`;
+                     // *** CORRECTED: Use result.outputFilename directly for the download link ***
+                     const outputFilename = result.outputFilename;
 
-                     console.log(`Setting download handler for ${fileName}. Output filename: ${outputFilename}`); // Log when handler is set
+                     console.log(`Setting download handler for ${fileName}. Using backend output filename: ${outputFilename}`); // Log when handler is set
 
                      downloadIndividualBtn.onclick = () => {
                          console.log(`Triggering download for ${outputFilename}`); // Log when download is triggered
-                         // Trigger download by navigating to the new backend download route
+                         // Trigger download by navigating to the backend download route
                          window.open(`/download/${outputFilename}`, '_blank');
                      };
 
@@ -554,8 +550,8 @@
                     let allComplete = true;
                     let successfullyProcessedCount = 0;
                     results.forEach(result => {
-                        // Pass the error message from the result if available
-                        updateFileStatus(result.name, result.status, result.status !== "Complete", result.errorMessage);
+                        // *** Pass the full result object to updateFileStatus ***
+                        updateFileStatus(result.name, result.status, result.status !== "Complete", result.errorMessage, result);
                         updateFileSizeInfo(result.name, result.originalSize, result.compressedSize, result.status);
                         if (result.status !== "Complete") {
                             allComplete = false; // If any file failed, don't show download button
@@ -571,10 +567,10 @@
                          // Update Download All button text with count
                          downloadAllBtn.textContent = `Download All (${successfullyProcessedCount} image${successfullyProcessedCount === 1 ? '' : 's'})`;
 
-                         // *** Update individual download button click handler ***
+                         // *** Update Download All button click handler (uses the backend route) ***
                          downloadAllBtn.onclick = () => {
                               console.log("Triggering Download All zip."); // Log when Download All is triggered
-                              // Trigger download by navigating to the new backend download-all-zip route
+                              // Trigger download by navigating to the backend download-all-zip route
                               window.open('/download-all-zip', '_blank');
                          };
                          // Hide overall status on complete success
@@ -642,6 +638,8 @@
 
         // Helper function to parse filename and extension (used for constructing download URL)
         // This is a basic implementation. Node's path module is more robust.
+        // NOTE: This path helper is no longer needed for constructing the download URL
+        // since we are using the outputFilename from the backend result directly.
         const path = {
             parse: (filePath) => {
                 const lastDot = filePath.lastIndexOf('.');
@@ -659,6 +657,7 @@
                 return filePath.substring(lastDot);
             }
         };
+
 
         // Function to load CSS asynchronously
         function loadCSS(href) {
@@ -687,4 +686,3 @@
     </script>
 </body>
 </html>
-
